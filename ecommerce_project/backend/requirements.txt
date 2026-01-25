@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+motor
+pymongo
+python-multipart
+python-jose[cryptography]
+passlib
+bcrypt==3.1.7
+pydantic[email]
+python-dotenv
+dnspython
+argon2-cffi
