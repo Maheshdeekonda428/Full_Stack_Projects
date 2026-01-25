@@ -51,7 +51,7 @@ async def create_product():
     created_product = await db.products.find_one({"_id": new_product.inserted_id})
     return created_product
 
-@router.put("/{id}", dependencies=[Depends(get_current_admin)])
+@router.put("/{id}", dependencies=[Depends(get_current_admin)], response_model=Product)
 async def update_product(id: str, product_update: Product):
     db = get_database()
     if not ObjectId.is_valid(id):

@@ -5,7 +5,7 @@ pymongo
 python-multipart
 python-jose[cryptography]
 passlib
-bcrypt==3.1.7
+bcrypt==4.1.2
 pydantic[email]
 python-dotenv
 dnspython
