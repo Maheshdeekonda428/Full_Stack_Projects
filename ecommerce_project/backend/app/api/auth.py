@@ -11,12 +11,30 @@ router = APIRouter()
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     db = get_database()
     user = await db.users.find_one({"email": form_data.username}) # Using email as username
-    if not user or not verify_password(form_data.password, user["password"]):
+    
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+        
+    try:
+        # Ensure password exists in DB and verify it
+        db_password = user.get("password")
+        if not db_password or not verify_password(form_data.password, db_password):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except Exception as e:
+        # Catch bcrypt errors (like 72 char limit) or other passlib failures
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Authentication error: {str(e)}"
+        )
+
     access_token = create_access_token(subject=str(user["_id"]))
     return {"access_token": access_token, "token_type": "bearer"}
 
