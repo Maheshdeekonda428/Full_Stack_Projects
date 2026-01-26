@@ -1,6 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
+from bson import ObjectId
 from app.core.config import settings
 from app.core.database import get_database
 from app.models.user import User
@@ -23,6 +24,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise credentials_exception
         
     db = get_database()
+    user = await db.users.find_one({"_id": ObjectId(user_id)}) 
     try:
         user = await db.users.find_one({"_id": ObjectId(user_id)})
     except Exception:
