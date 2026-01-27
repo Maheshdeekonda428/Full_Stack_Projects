@@ -33,12 +33,19 @@ api.interceptors.response.use(
         if (error.response?.status === 401) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            window.location.href = '/login';
-            toast.error('Session expired. Please login again.');
+
+            // Only redirect if not already on the login page to avoid infinite loops
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+                toast.error('Session expired. Please login again.');
+            }
         } else if (error.response?.status === 403) {
             toast.error('You do not have permission to perform this action.');
         } else if (error.response?.status >= 500) {
             toast.error('Server error. Please try again later.');
+        } else if (!error.response) {
+            // Check for network errors (e.g. server is down)
+            toast.error('Unable to connect to the server. Please check your connection.');
         }
 
         return Promise.reject(error);

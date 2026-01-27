@@ -73,7 +73,7 @@ async def get_orders():
     orders = await db.orders.find({}).to_list(length=100)
     return orders
 
-@router.put("/{id}/deliver", dependencies=[Depends(get_current_admin)])
+@router.put("/{id}/deliver", dependencies=[Depends(get_current_admin)], response_model=Order)
 async def update_order_to_delivered(id: str):
     db = get_database()
     order = await db.orders.find_one({"_id": ObjectId(id)})
