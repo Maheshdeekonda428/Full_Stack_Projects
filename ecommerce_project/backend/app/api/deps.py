@@ -5,11 +5,7 @@ from bson import ObjectId
 from app.core.config import settings
 from app.core.database import get_database
 from app.models.user import User
-<<<<<<< HEAD
 from app.models.common import PyObjectId
-=======
->>>>>>> 25f21f89114714acd6969727eeabb2ae99ed1b04
-from bson import ObjectId
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
@@ -28,15 +24,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise credentials_exception
         
     db = get_database()
-    user = await db.users.find_one({"_id": ObjectId(user_id)}) 
-<<<<<<< HEAD
-=======
     try:
         user = await db.users.find_one({"_id": ObjectId(user_id)})
     except Exception:
         raise credentials_exception
-        
->>>>>>> 25f21f89114714acd6969727eeabb2ae99ed1b04
     if user is None:
         raise credentials_exception
     return User(**user)
