@@ -2,9 +2,26 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 
+// Helper function to format price with commas
+const formatPrice = (price) => {
+    return price.toLocaleString('en-IN');
+};
+
+// Helper function to handle image URLs (local vs web)
+const getImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return `http://localhost:8000${url}`;
+};
+
 const ProductCard = ({ product }) => {
     const { addToCart } = useCart();
     const { addToWishlist, isInWishlist } = useWishlist();
+
+    // Set default rating and reviews if not present
+    const rating = product.rating || 4.5;
+    const numReviews = product.numReviews && product.numReviews > 50 ? product.numReviews : "50+";
+
     const discount = product.originalPrice
         ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
         : 0;
@@ -22,9 +39,13 @@ const ProductCard = ({ product }) => {
             {/* Image Container */}
             <div className="relative overflow-hidden">
                 <img
-                    src={product.image || 'https://via.placeholder.com/300x300?text=No+Image'}
+                    src={
+                        product.images && product.images.length > 0
+                            ? getImageUrl(product.images[0])
+                            : getImageUrl(product.image) || 'https://via.placeholder.com/300x300?text=No+Image'
+                    }
                     alt={product.name}
-                    className="w-full h-48 object-cover transform group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-48 object-cover"
                 />
 
                 {/* Discount Badge */}
@@ -56,13 +77,6 @@ const ProductCard = ({ product }) => {
                     </svg>
                 </button>
 
-                {/* Quick View Overlay */}
-                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-white font-medium bg-white bg-opacity-20 px-4 py-2 rounded-full backdrop-blur-sm">
-                        Quick View
-                    </span>
-                </div>
-
                 {/* Out of Stock Overlay */}
                 {product.countInStock === 0 && (
                     <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
@@ -89,7 +103,7 @@ const ProductCard = ({ product }) => {
                         {[...Array(5)].map((_, i) => (
                             <svg
                                 key={i}
-                                className={`w-4 h-4 ${i < Math.round(product.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}
+                                className={`w-4 h-4 ${i < Math.round(rating) ? 'text-yellow-400' : 'text-gray-300'}`}
                                 fill="currentColor"
                                 viewBox="0 0 20 20"
                             >
@@ -97,15 +111,15 @@ const ProductCard = ({ product }) => {
                             </svg>
                         ))}
                     </div>
-                    <span className="ml-1 text-xs text-gray-500">({product.numReviews || 0})</span>
+                    <span className="ml-1 text-xs text-gray-500">{rating.toFixed(1)} ({numReviews} {numReviews === 1 ? 'review' : 'reviews'})</span>
                 </div>
 
                 {/* Price */}
                 <div className="mt-2 flex items-center justify-between">
                     <div>
-                        <span className="text-lg font-bold text-gray-900">₹{product.price}</span>
+                        <span className="text-lg font-bold text-gray-900">₹{formatPrice(product.price)}</span>
                         {product.originalPrice && (
-                            <span className="ml-2 text-sm text-gray-400 line-through">₹{product.originalPrice}</span>
+                            <span className="ml-2 text-sm text-gray-400 line-through">₹{formatPrice(product.originalPrice)}</span>
                         )}
                     </div>
 

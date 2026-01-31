@@ -16,7 +16,8 @@ class Product(BaseModel):
     user: Optional[PyObjectId] = None
 
     name: str
-    image: Optional[str] = ""
+    image: Optional[str] = ""  # Kept for backward compatibility
+    images: List[str] = Field(default_factory=list)  # New: support multiple images
     brand: Optional[str] = ""
     category: Optional[str] = ""
     description: Optional[str] = ""

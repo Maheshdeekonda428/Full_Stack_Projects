@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.core.database import connect_to_mongo, close_mongo_connection
 from app.api import auth, products, orders, users
+import os
 
 app = FastAPI()
 
@@ -19,6 +21,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Static files for uploaded images
+static_path = os.path.join(os.path.dirname(__file__), "..", "static")
+os.makedirs(static_path, exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 @app.on_event("startup")
 async def startup_db_client():

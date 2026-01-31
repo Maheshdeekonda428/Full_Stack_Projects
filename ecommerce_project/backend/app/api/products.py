@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from typing import List
 from app.core.database import get_database
 from app.models.product import Product
 from app.models.user import User
 from app.api.deps import get_current_user, get_current_admin
 from bson import ObjectId
+import os
+import uuid
+from pathlib import Path
 
 router = APIRouter()
 
@@ -90,3 +93,53 @@ async def delete_product(id: str):
         return {"message": "Product removed"}
     else:
         raise HTTPException(status_code=404, detail="Product not found")
+
+@router.post("/upload", dependencies=[Depends(get_current_admin)])
+async def upload_product_images(files: List[UploadFile] = File(...)):
+    """
+    Upload product images (max 3 files)
+    Accepts: jpg, jpeg, png, webp
+    Max size: 5MB per file
+    """
+    if len(files) > 3:
+        raise HTTPException(status_code=400, detail="Maximum 3 images allowed")
+    
+    allowed_extensions = {".jpg", ".jpeg", ".png", ".webp"}
+    max_file_size = 5 * 1024 * 1024  # 5MB
+    
+    uploaded_urls = []
+    
+    # Get the uploads directory path
+    upload_dir = Path(__file__).parent.parent.parent / "static" / "uploads"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    
+    for file in files:
+        # Validate file extension
+        file_ext = os.path.splitext(file.filename)[1].lower()
+        if file_ext not in allowed_extensions:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type: {file.filename}. Allowed: jpg, jpeg, png, webp"
+            )
+        
+        # Read file content to check size
+        content = await file.read()
+        if len(content) > max_file_size:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File {file.filename} exceeds 5MB limit"
+            )
+        
+        # Generate unique filename
+        unique_filename = f"{uuid.uuid4()}{file_ext}"
+        file_path = upload_dir / unique_filename
+        
+        # Save file
+        with open(file_path, "wb") as f:
+            f.write(content)
+        
+        # Create URL for the uploaded file
+        file_url = f"/static/uploads/{unique_filename}"
+        uploaded_urls.append(file_url)
+    
+    return {"images": uploaded_urls}

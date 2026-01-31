@@ -6,6 +6,13 @@ import { PageLoader } from '../../components/common/Loader';
 import Loader from '../../components/common/Loader';
 import toast from 'react-hot-toast';
 
+// Helper function to handle image URLs (local vs web)
+const getImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return `http://localhost:8000${url}`;
+};
+
 const ProductForm = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -19,8 +26,13 @@ const ProductForm = () => {
         price: '',
         countInStock: '',
         image: '',
+        images: [],
         brand: '',
     });
+
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [uploadingImages, setUploadingImages] = useState(false);
+    const [webImageUrl, setWebImageUrl] = useState('');
 
     const { data: product, isLoading: isLoadingProduct } = useQuery({
         queryKey: ['product', id],
@@ -37,6 +49,7 @@ const ProductForm = () => {
                 price: product.price || '',
                 countInStock: product.countInStock || '',
                 image: product.image || '',
+                images: product.images || [],
                 brand: product.brand || '',
             });
         }
@@ -46,7 +59,6 @@ const ProductForm = () => {
         mutationFn: () => productService.createProduct(),
         onSuccess: (data) => {
             queryClient.invalidateQueries(['products']);
-            toast.success('Product created successfully');
             navigate(`/admin/products/edit/${data._id}`);
         },
         onError: () => {
@@ -72,6 +84,65 @@ const ProductForm = () => {
             ...prev,
             [name]: name === 'price' || name === 'countInStock' ? Number(value) : value,
         }));
+    };
+
+    const handleFileSelect = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 3) {
+            toast.error('Maximum 3 images allowed');
+            return;
+        }
+
+        setSelectedFiles(files);
+
+        // Upload images immediately
+        setUploadingImages(true);
+        try {
+            const imageUrls = await productService.uploadProductImages(files);
+            setFormData(prev => ({
+                ...prev,
+                images: imageUrls,
+                image: imageUrls[0] || '',  // Set first image as primary
+            }));
+            toast.success('Images uploaded successfully');
+        } catch (error) {
+            toast.error('Failed to upload images');
+            console.error(error);
+        } finally {
+            setUploadingImages(false);
+        }
+    };
+
+    const handleRemoveImage = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            images: prev.images.filter((_, i) => i !== index),
+            image: prev.images.filter((_, i) => i !== index)[0] || '',
+        }));
+    };
+
+    const handleAddWebImageUrl = (e) => {
+        e.preventDefault();
+        if (!webImageUrl) return;
+
+        if (formData.images.length >= 3) {
+            toast.error('Maximum 3 images allowed');
+            return;
+        }
+
+        // Simple validation for URL
+        if (!webImageUrl.startsWith('http')) {
+            toast.error('Please enter a valid URL starting with http/https');
+            return;
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            images: [...prev.images, webImageUrl],
+            image: prev.image || webImageUrl, // Set as primary if none exists
+        }));
+        setWebImageUrl('');
+        toast.success('Web image added');
     };
 
     const handleSubmit = (e) => {
@@ -191,7 +262,7 @@ const ProductForm = () => {
                                     value={formData.price}
                                     onChange={handleChange}
                                     className="input-field"
-                                    placeholder="0"
+                                    placeholder="Enter price"
                                     min="0"
                                     required
                                 />
@@ -207,7 +278,7 @@ const ProductForm = () => {
                                     value={formData.countInStock}
                                     onChange={handleChange}
                                     className="input-field"
-                                    placeholder="0"
+                                    placeholder="Enter stock quantity"
                                     min="0"
                                     required
                                 />
@@ -217,18 +288,82 @@ const ProductForm = () => {
                             </div>
                         </div>
 
+                        {/* Product Images Upload */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Image URL
+                                Product Images (Max 3)
                             </label>
+
+                            {/* File Input */}
                             <input
-                                type="url"
-                                name="image"
-                                value={formData.image}
-                                onChange={handleChange}
+                                type="file"
+                                accept="image/jpeg,image/jpg,image/png,image/webp"
+                                multiple
+                                onChange={handleFileSelect}
+                                disabled={uploadingImages}
                                 className="input-field"
-                                placeholder="https://example.com/image.jpg"
                             />
+                            <p className="text-xs text-gray-500 mt-1">
+                                Accepted formats: JPG, PNG, WEBP (Max 5MB per image)
+                            </p>
+
+                            <div className="mt-4">
+                                <label className="block text-xs font-medium text-gray-500 mb-1">
+                                    Or Add Web Image URL
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="url"
+                                        value={webImageUrl}
+                                        onChange={(e) => setWebImageUrl(e.target.value)}
+                                        className="input-field py-1.5"
+                                        placeholder="https://example.com/image.jpg"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAddWebImageUrl}
+                                        className="btn-secondary py-1.5 px-4"
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Image Previews */}
+                            {formData.images.length > 0 && (
+                                <div className="mt-4 grid grid-cols-3 gap-4">
+                                    {formData.images.map((imageUrl, index) => (
+                                        <div key={index} className="relative group">
+                                            <img
+                                                src={getImageUrl(imageUrl)}
+                                                alt={`Product ${index + 1}`}
+                                                className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveImage(index)}
+                                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                            {index === 0 && (
+                                                <span className="absolute bottom-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                                                    Primary
+                                                </span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {uploadingImages && (
+                                <div className="mt-4 text-center">
+                                    <Loader size="sm" />
+                                    <p className="text-sm text-gray-600 mt-2">Uploading images...</p>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex gap-4 pt-4">
@@ -255,7 +390,7 @@ const ProductForm = () => {
                         <div className="product-card">
                             <div className="relative overflow-hidden">
                                 <img
-                                    src={formData.image || 'https://via.placeholder.com/300x200?text=No+Image'}
+                                    src={getImageUrl(formData.image) || 'https://via.placeholder.com/300x200?text=No+Image'}
                                     alt="Preview"
                                     className="w-full h-48 object-cover"
                                 />

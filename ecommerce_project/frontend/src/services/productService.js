@@ -33,6 +33,20 @@ const productService = {
         return response.data;
     },
 
+    async uploadProductImages(files) {
+        const formData = new FormData();
+        files.forEach(file => {
+            formData.append('files', file);
+        });
+
+        const response = await api.post('/products/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data.images;
+    },
+
     getCategories() {
         return [
             'Electronics',
