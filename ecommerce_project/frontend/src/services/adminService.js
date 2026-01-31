@@ -7,7 +7,8 @@ export const adminService = {
     },
 
     async updateOrderStatus(orderId, status) {
-        const response = await api.put(`/orders/${orderId}/deliver`);
+        const endpoint = status === 'paid' ? `/orders/${orderId}/pay` : `/orders/${orderId}/deliver`;
+        const response = await api.put(endpoint);
         return response.data;
     },
 
@@ -47,6 +48,11 @@ export const adminService = {
 
     async getAllUsers() {
         const response = await api.get('/users');
+        return response.data;
+    },
+
+    async deleteOrder(orderId) {
+        const response = await api.delete(`/orders/${orderId}`);
         return response.data;
     },
 };

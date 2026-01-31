@@ -3,13 +3,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import connect_to_mongo, close_mongo_connection
 from app.api import auth, products, orders, users
 
-# from app.core.database import connect_to_mongo, close_mongo_connection, db
-
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Should be specific domain in production
+    allow_origins=[
+        "http://localhost:5173",
+        # "http://localhost:5174",
+        # "http://localhost:5175",
+        # "http://127.0.0.1:5173",
+        # "http://127.0.0.1:5174",
+        # "http://127.0.0.1:5175",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,13 +36,3 @@ app.include_router(users.router, prefix="/api/users", tags=["users"])
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to the E-commerce API"}
-
-# @app.get("/health")
-# async def health_check():
-#     try:
-#         # Ping the database
-#         await db.client.admin.command('ping')
-#         return {"status": "healthy", "database": "connected"}
-#     except Exception as e:
-#         return {"status": "unhealthy", "database": str(e)}
-

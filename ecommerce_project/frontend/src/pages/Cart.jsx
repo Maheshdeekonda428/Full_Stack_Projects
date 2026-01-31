@@ -1,10 +1,21 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import toast from 'react-hot-toast';
 
 const Cart = () => {
     const { cartItems, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCart();
+    const { addToWishlist, isInWishlist } = useWishlist();
     const navigate = useNavigate();
+
+    const handleMoveToWishlist = (item) => {
+        if (!isInWishlist(item._id)) {
+            addToWishlist(item);
+        } else {
+            toast.success('Item already in wishlist!');
+        }
+        removeFromCart(item._id);
+    };
 
     const handleClearCart = () => {
         if (window.confirm('Are you sure you want to clear your cart?')) {
@@ -80,6 +91,12 @@ const Cart = () => {
                                         className="text-red-500 hover:text-red-600 text-sm"
                                     >
                                         Remove
+                                    </button>
+                                    <button
+                                        onClick={() => handleMoveToWishlist(item)}
+                                        className="text-blue-600 hover:text-blue-700 text-sm px-3 py-1 border border-blue-100 rounded-md bg-blue-50/50 hover:bg-blue-50 transition-colors"
+                                    >
+                                        Save to Wishlist
                                     </button>
                                 </div>
                             </div>

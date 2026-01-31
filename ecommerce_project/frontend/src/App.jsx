@@ -10,6 +10,7 @@ import Register from './pages/auth/Register';
 import ProductList from './pages/product/ProductList';
 import ProductDetail from './pages/product/ProductDetail';
 import Cart from './pages/Cart';
+import Wishlist from './pages/Wishlist';
 import Checkout from './pages/Checkout';
 import OrderList from './pages/order/OrderList';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -34,6 +35,11 @@ function App() {
                     <Route path="/cart" element={
                         <ProtectedRoute>
                             <Cart />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/wishlist" element={
+                        <ProtectedRoute>
+                            <Wishlist />
                         </ProtectedRoute>
                     } />
                     <Route path="/checkout" element={

@@ -9,9 +9,13 @@ from bson import ObjectId
 router = APIRouter()
 
 @router.get("/", response_model=List[Product])
-async def get_products():
+async def get_products(search: str = ""):
     db = get_database()
-    products = await db.products.find({}).to_list(length=100)
+    query = {}
+    if search:
+        query["name"] = {"$regex": search, "$options": "i"}
+        
+    products = await db.products.find(query).to_list(length=100)
     return products
 
 @router.get("/{id}", response_model=Product)

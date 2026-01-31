@@ -7,33 +7,40 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from passlib.context import CryptContext
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-ADMIN_USER = {
-    "name": "Admin User",
-    "email": "admin@shophub.com",
-    "password": pwd_context.hash("admin123"),
-    "isAdmin": True
-}
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 async def seed_database():
     print("Connecting to MongoDB...")
+    
+    # Get credentials from settings
+    admin_email = settings.admin_email
+    admin_password = settings.admin_password
+    
+    if admin_email == "[EMAIL_ADDRESS]" or admin_password == "[PASSWORD]":
+        print("❌ ERROR: Admin credentials not set in .env file!")
+        return
+
+    ADMIN_USER = {
+        "name": "admin",
+        "email": admin_email,
+        "password": pwd_context.hash(admin_password),
+        "isAdmin": True
+    }
+
     client = AsyncIOMotorClient(settings.MONGO_URL)
     db = client[settings.DATABASE_NAME]
     
     # Check if admin exists
-    existing_admin = await db.users.find_one({"email": ADMIN_USER["email"]})
+    existing_admin = await db.users.find_one({"email": admin_email})
     if existing_admin:
-        print(f"Admin user already exists: {ADMIN_USER['email']}")
+        print(f"Admin user already exists: {admin_email}")
     else:
         await db.users.insert_one(ADMIN_USER)
-        print(f"✅ Created admin user: {ADMIN_USER['email']} / admin123")
+        print(f"✅ Created admin user: {admin_email}")
     
     client.close()
     print("\n🎉 Database seeding complete!")
-    print("\n📝 Login credentials:")
-    print(f"   Email: admin@shophub.com")
-    print(f"   Password: admin123")
 
 if __name__ == "__main__":
     asyncio.run(seed_database())

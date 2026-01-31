@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useWishlist } from '../../context/WishlistContext';
 
 const ProductCard = ({ product }) => {
     const { addToCart } = useCart();
+    const { addToWishlist, isInWishlist } = useWishlist();
     const discount = product.originalPrice
         ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
         : 0;
@@ -34,10 +36,22 @@ const ProductCard = ({ product }) => {
 
                 {/* Wishlist Button */}
                 <button
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                    className="absolute top-2 right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        addToWishlist(product);
+                    }}
+                    className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center shadow-md transition-all ${isInWishlist(product._id)
+                        ? 'bg-red-50 text-red-500 opacity-100 scale-110'
+                        : 'bg-white text-gray-400 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500'
+                        }`}
                 >
-                    <svg className="w-5 h-5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                        className="w-5 h-5"
+                        fill={isInWishlist(product._id) ? "currentColor" : "none"}
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                 </button>

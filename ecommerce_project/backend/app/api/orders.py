@@ -86,3 +86,13 @@ async def update_order_to_delivered(id: str):
         return await db.orders.find_one({"_id": ObjectId(id)})
     else:
         raise HTTPException(status_code=404, detail="Order not found")
+@router.delete("/{id}", dependencies=[Depends(get_current_admin)], status_code=status.HTTP_204_NO_CONTENT)
+async def delete_order(id: str):
+    db = get_database()
+    if not ObjectId.is_valid(id):
+        raise HTTPException(status_code=404, detail="Invalid ID")
+        
+    delete_result = await db.orders.delete_one({"_id": ObjectId(id)})
+    if delete_result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return None

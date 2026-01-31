@@ -12,6 +12,7 @@ const Checkout = () => {
     const { user } = useAuth();
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState('Credit Card');
 
     const [shippingData, setShippingData] = useState({
         address: '',
@@ -25,6 +26,7 @@ const Checkout = () => {
         cardName: '',
         expiryDate: '',
         cvv: '',
+        upiId: '',
     });
 
     const subtotal = getCartTotal();
@@ -51,7 +53,13 @@ const Checkout = () => {
     };
 
     const validatePayment = () => {
-        return paymentData.cardNumber && paymentData.cardName && paymentData.expiryDate && paymentData.cvv;
+        if (paymentMethod === 'Credit Card' || paymentMethod === 'Debit Card') {
+            return paymentData.cardNumber && paymentData.cardName && paymentData.expiryDate && paymentData.cvv;
+        }
+        if (paymentMethod === 'UPI') {
+            return paymentData.upiId && paymentData.upiId.includes('@');
+        }
+        return true; // COD is always valid
     };
 
     const handlePlaceOrder = async () => {
@@ -66,10 +74,11 @@ const Checkout = () => {
                     product: item._id,
                 })),
                 shippingAddress: shippingData,
-                paymentMethod: 'Credit Card',
+                paymentMethod: paymentMethod,
                 taxPrice: tax,
                 shippingPrice: shipping,
                 totalPrice: total,
+                paymentMetadata: paymentMethod === 'UPI' ? { upiId: paymentData.upiId } : null
             };
 
             await orderService.createOrder(orderData);
@@ -97,8 +106,8 @@ const Checkout = () => {
                         <div key={step.id} className="flex items-center">
                             <div
                                 className={`flex items-center justify-center w-12 h-12 rounded-full font-bold text-lg transition-all ${currentStep >= step.id
-                                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                                        : 'bg-gray-200 text-gray-500'
+                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+                                    : 'bg-gray-200 text-gray-500'
                                     }`}
                             >
                                 {currentStep > step.id ? '✓' : step.icon}
@@ -187,58 +196,115 @@ const Checkout = () => {
                         {/* Step 2: Payment */}
                         {currentStep === 2 && (
                             <div className="animate-fade-in">
-                                <h2 className="text-xl font-bold text-gray-900 mb-6">Payment Details</h2>
-                                <p className="text-sm text-gray-500 mb-4">Demo only - no real payment processed</p>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Card Number</label>
-                                        <input
-                                            type="text"
-                                            name="cardNumber"
-                                            value={paymentData.cardNumber}
-                                            onChange={handlePaymentChange}
-                                            className="input-field"
-                                            placeholder="4242 4242 4242 4242"
-                                            maxLength="19"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Name on Card</label>
-                                        <input
-                                            type="text"
-                                            name="cardName"
-                                            value={paymentData.cardName}
-                                            onChange={handlePaymentChange}
-                                            className="input-field"
-                                            placeholder="John Doe"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Expiry Date</label>
+                                <h2 className="text-xl font-bold text-gray-900 mb-6">Payment Method</h2>
+
+                                {/* Method Selection */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                                    {[
+                                        { id: 'Credit Card', name: 'Credit Card', icon: '💳' },
+                                        { id: 'Debit Card', name: 'Debit Card', icon: '🪪' },
+                                        { id: 'UPI', name: 'UPI / PhonePe / GPay', icon: '📱' },
+                                        { id: 'COD', name: 'Cash on Delivery', icon: '💵' },
+                                    ].map((method) => (
+                                        <button
+                                            key={method.id}
+                                            onClick={() => setPaymentMethod(method.id)}
+                                            className={`flex items-center p-4 border-2 rounded-xl transition-all ${paymentMethod === method.id
+                                                    ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-600 ring-opacity-10'
+                                                    : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            <span className="text-2xl mr-3">{method.icon}</span>
+                                            <span className={`font-medium ${paymentMethod === method.id ? 'text-blue-700' : 'text-gray-700'}`}>
+                                                {method.name}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="space-y-6">
+                                    {(paymentMethod === 'Credit Card' || paymentMethod === 'Debit Card') && (
+                                        <div className="animate-slide-up">
+                                            <p className="text-sm text-gray-500 mb-4">Secure card payment - Encrypted and safe</p>
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Card Number</label>
+                                                    <input
+                                                        type="text"
+                                                        name="cardNumber"
+                                                        value={paymentData.cardNumber}
+                                                        onChange={handlePaymentChange}
+                                                        className="input-field"
+                                                        placeholder="4242 4242 4242 4242"
+                                                        maxLength="19"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Name on Card</label>
+                                                    <input
+                                                        type="text"
+                                                        name="cardName"
+                                                        value={paymentData.cardName}
+                                                        onChange={handlePaymentChange}
+                                                        className="input-field"
+                                                        placeholder="John Doe"
+                                                    />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Expiry Date</label>
+                                                        <input
+                                                            type="text"
+                                                            name="expiryDate"
+                                                            value={paymentData.expiryDate}
+                                                            onChange={handlePaymentChange}
+                                                            className="input-field"
+                                                            placeholder="MM/YY"
+                                                            maxLength="5"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">CVV</label>
+                                                        <input
+                                                            type="password"
+                                                            name="cvv"
+                                                            value={paymentData.cvv}
+                                                            onChange={handlePaymentChange}
+                                                            className="input-field"
+                                                            placeholder="•••"
+                                                            maxLength="3"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {paymentMethod === 'UPI' && (
+                                        <div className="animate-slide-up">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">UPI ID</label>
                                             <input
                                                 type="text"
-                                                name="expiryDate"
-                                                value={paymentData.expiryDate}
+                                                name="upiId"
+                                                value={paymentData.upiId}
                                                 onChange={handlePaymentChange}
                                                 className="input-field"
-                                                placeholder="MM/YY"
-                                                maxLength="5"
+                                                placeholder="username@bank"
                                             />
+                                            <p className="mt-2 text-sm text-gray-500">A payment request will be sent to your UPI app.</p>
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">CVV</label>
-                                            <input
-                                                type="password"
-                                                name="cvv"
-                                                value={paymentData.cvv}
-                                                onChange={handlePaymentChange}
-                                                className="input-field"
-                                                placeholder="•••"
-                                                maxLength="3"
-                                            />
+                                    )}
+
+                                    {paymentMethod === 'COD' && (
+                                        <div className="animate-slide-up p-4 bg-green-50 rounded-lg border border-green-100">
+                                            <p className="text-green-800 flex items-center">
+                                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                You can pay in cash when your order is delivered.
+                                            </p>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                                 <div className="flex justify-between mt-8">
                                     <button onClick={() => setCurrentStep(1)} className="btn-secondary">
@@ -283,7 +349,12 @@ const Checkout = () => {
                                         <div>
                                             <h3 className="font-medium text-gray-900">Payment Method</h3>
                                             <p className="text-gray-600 mt-1">
-                                                Credit Card ending in ****{paymentData.cardNumber.slice(-4)}
+                                                {paymentMethod === 'COD'
+                                                    ? 'Cash on Delivery'
+                                                    : paymentMethod === 'UPI'
+                                                        ? `UPI (${paymentData.upiId})`
+                                                        : `${paymentMethod} ending in ****${paymentData.cardNumber.slice(-4)}`
+                                                }
                                             </p>
                                         </div>
                                         <button onClick={() => setCurrentStep(2)} className="text-blue-600 text-sm">

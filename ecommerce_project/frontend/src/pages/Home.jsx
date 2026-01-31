@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import ProductCard from '../components/product/ProductCard';
 import { ProductSkeleton } from '../components/common/Loader';
 import productService from '../services/productService';
+import useRecentlyViewed from '../hooks/useRecentlyViewed';
 
 const Home = () => {
     const { data: products, isLoading } = useQuery({
@@ -10,13 +11,15 @@ const Home = () => {
         queryFn: () => productService.getProducts(),
     });
 
+    const { recentProducts } = useRecentlyViewed();
+
     const categories = [
-        { name: 'Electronics', gradient: 'from-blue-500 to-cyan-500', icon: '📱' },
-        { name: 'Clothing', gradient: 'from-pink-500 to-rose-500', icon: '👕' },
-        { name: 'Home & Garden', gradient: 'from-green-500 to-emerald-500', icon: '🏠' },
-        { name: 'Sports', gradient: 'from-orange-500 to-amber-500', icon: '⚽' },
-        { name: 'Books', gradient: 'from-purple-500 to-violet-500', icon: '📚' },
-        { name: 'Beauty', gradient: 'from-fuchsia-500 to-pink-500', icon: '💄' },
+        { name: 'Electronics', gradient: 'from-blue-600 to-cyan-400', icon: '📱' },
+        { name: 'Clothing', gradient: 'from-pink-600 to-rose-400', icon: '👕' },
+        { name: 'Home & Garden', gradient: 'from-green-600 to-emerald-400', icon: '🏠' },
+        { name: 'Sports', gradient: 'from-orange-600 to-amber-400', icon: '⚽' },
+        { name: 'Books', gradient: 'from-purple-600 to-violet-400', icon: '📚' },
+        { name: 'Beauty', gradient: 'from-fuchsia-600 to-pink-400', icon: '💄' },
     ];
 
     const features = [
@@ -39,10 +42,16 @@ const Home = () => {
                             Shop the latest trends with exclusive deals and free shipping on your first order.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4">
-                            <Link to="/products" className="btn-primary bg-white text-blue-600 hover:bg-gray-100">
+                            <Link
+                                to="/products"
+                                className="px-8 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-50 hover:text-blue-600 hover:scale-105 transition-all duration-300 text-center"
+                            >
                                 Shop Now
                             </Link>
-                            <Link to="/products" className="btn-secondary border-white text-white hover:bg-white hover:text-blue-600">
+                            <Link
+                                to="/products"
+                                className="px-8 py-3 text-white font-bold rounded-lg hover:bg-blue-50 hover:text-blue-600 hover:scale-105 transition-all duration-300 text-center"
+                            >
                                 Explore Categories
                             </Link>
                         </div>
@@ -121,9 +130,23 @@ const Home = () => {
                 </div>
             </section>
 
+            {/* Recently Viewed */}
+            {recentProducts && recentProducts.length > 0 && (
+                <section className="py-16 border-t">
+                    <div className="max-w-7xl mx-auto px-4">
+                        <h2 className="section-title mb-8 text-2xl">Recently Viewed</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                            {recentProducts.map((product) => (
+                                <ProductCard key={`recent-${product._id}`} product={product} />
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
+
             {/* Promo Banner */}
-            <section className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 py-16">
-                <div className="max-w-7xl mx-auto px-4 text-center text-white">
+            <section className="bg-gradient-to-r from-orange-500 to-red-500 text-white py-20 text-center">
+                <div className="max-w-4xl mx-auto px-4">
                     <h2 className="text-3xl md:text-5xl font-bold mb-4">Big Sale Up To 50% Off!</h2>
                     <p className="text-xl mb-8">Limited time offer. Don't miss out on amazing deals.</p>
                     <Link to="/products" className="bg-white text-orange-600 px-8 py-4 rounded-full font-bold hover:bg-gray-100 transition-colors inline-block">

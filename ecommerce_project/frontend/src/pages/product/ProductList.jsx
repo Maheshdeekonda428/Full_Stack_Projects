@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../../components/product/ProductCard';
@@ -16,6 +16,14 @@ const ProductList = () => {
         maxPrice: searchParams.get('maxPrice') || '',
         sort: searchParams.get('sort') || 'newest',
     });
+
+    // Update internal search state if URL changes (e.g., from Navbar search)
+    useEffect(() => {
+        const urlSearch = searchParams.get('search') || '';
+        if (urlSearch !== filters.search) {
+            setFilters(prev => ({ ...prev, search: urlSearch }));
+        }
+    }, [searchParams]);
 
     const { data: products, isLoading } = useQuery({
         queryKey: ['products', filters],

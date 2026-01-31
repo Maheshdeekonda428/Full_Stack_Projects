@@ -22,6 +22,34 @@ const AdminOrders = () => {
         },
     });
 
+    const payMutation = useMutation({
+        mutationFn: (orderId) => adminService.updateOrderStatus(orderId, 'paid'),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['allOrders']);
+            toast.success('Order marked as paid');
+        },
+        onError: () => {
+            toast.error('Failed to mark order as paid');
+        },
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (orderId) => adminService.deleteOrder(orderId),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['allOrders']);
+            toast.success('Order deleted successfully');
+        },
+        onError: () => {
+            toast.error('Failed to delete order');
+        },
+    });
+
+    const handleDeleteOrder = (orderId) => {
+        if (window.confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
+            deleteMutation.mutate(orderId);
+        }
+    };
+
     const getStatusColor = (order) => {
         if (order.isDelivered) return 'badge-success';
         if (order.isPaid) return 'badge-info';
@@ -76,6 +104,15 @@ const AdminOrders = () => {
                                     <span className={`badge ${getStatusColor(order)}`}>
                                         {getStatusText(order)}
                                     </span>
+                                    {!order.isPaid && (
+                                        <button
+                                            onClick={() => payMutation.mutate(order._id)}
+                                            disabled={payMutation.isLoading}
+                                            className="btn-primary text-sm bg-green-600 hover:bg-green-700 border-none"
+                                        >
+                                            Mark Paid
+                                        </button>
+                                    )}
                                     {order.isPaid && !order.isDelivered && (
                                         <button
                                             onClick={() => deliverMutation.mutate(order._id)}
@@ -85,6 +122,16 @@ const AdminOrders = () => {
                                             Mark Delivered
                                         </button>
                                     )}
+                                    <button
+                                        onClick={() => handleDeleteOrder(order._id)}
+                                        disabled={deleteMutation.isLoading}
+                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        title="Delete Order"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
 

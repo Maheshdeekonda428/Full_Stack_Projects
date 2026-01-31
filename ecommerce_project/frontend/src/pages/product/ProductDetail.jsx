@@ -1,17 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useCart } from '../../context/CartContext';
+import { useWishlist } from '../../context/WishlistContext';
 import { PageLoader, ProductSkeleton } from '../../components/common/Loader';
 import ProductCard from '../../components/product/ProductCard';
 import productService from '../../services/productService';
+import useRecentlyViewed from '../../hooks/useRecentlyViewed';
 
 const ProductDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { addToCart } = useCart();
+    const { addToWishlist, isInWishlist } = useWishlist();
     const [quantity, setQuantity] = useState(1);
     const [selectedImage, setSelectedImage] = useState(0);
+    const { addToRecentlyViewed } = useRecentlyViewed();
 
     const { data: product, isLoading, error } = useQuery({
         queryKey: ['product', id],
@@ -22,6 +26,13 @@ const ProductDetail = () => {
         queryKey: ['products'],
         queryFn: () => productService.getProducts(),
     });
+
+    // Add to recently viewed when product data is ready
+    useEffect(() => {
+        if (product) {
+            addToRecentlyViewed(product);
+        }
+    }, [product]);
 
     const relatedProducts = allProducts?.filter(
         p => p._id !== id && p.category === product?.category
@@ -186,6 +197,23 @@ const ProductDetail = () => {
                                 </button>
                                 <button onClick={handleBuyNow} className="btn-secondary flex-1">
                                     Buy Now
+                                </button>
+                                <button
+                                    onClick={() => addToWishlist(product)}
+                                    className={`p-3 rounded-lg border flex items-center justify-center transition-all ${isInWishlist(product._id)
+                                        ? 'bg-red-50 border-red-200 text-red-500 shadow-sm'
+                                        : 'bg-white border-gray-300 text-gray-400 hover:bg-red-50 hover:border-red-200 hover:text-red-500'
+                                        }`}
+                                    title={isInWishlist(product._id) ? "Remove from wishlist" : "Add to wishlist"}
+                                >
+                                    <svg
+                                        className="w-6 h-6"
+                                        fill={isInWishlist(product._id) ? "currentColor" : "none"}
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    </svg>
                                 </button>
                             </div>
                         </div>
