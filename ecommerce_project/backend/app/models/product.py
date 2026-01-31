@@ -6,7 +6,7 @@ from pydantic import ConfigDict
 
 class Review(BaseModel):
     name: Optional[str] = ""
-    rating: Optional[int] = 0
+    rating: float = 4.8
     comment: Optional[str] = ""
     user: Optional[PyObjectId] = None
 
@@ -22,10 +22,10 @@ class Product(BaseModel):
     description: Optional[str] = ""
 
     reviews: List[Review] = Field(default_factory=list)
-    rating: float = 0
-    numReviews: int = 0
+    rating: float = 4.8
+    numReviews: int = "50+"
     price: float = 0
-    countInStock: int = 0
+    countInStock: int = 100
 
     model_config = ConfigDict(
         populate_by_name=True,
