@@ -33,20 +33,10 @@ async def get_product(id: str):
     raise HTTPException(status_code=404, detail="Product not found")
 
 @router.post("/", dependencies=[Depends(get_current_admin)], response_model=Product)
-async def create_product():
+async def create_product(product_in: Product):
     db = get_database()
-    product = Product(
-        name="Sample Name",
-        price=0,
-        user=None, # Should ideally be current admin user ID but optional for now
-        image="/images/sample.jpg",
-        brand="Sample Brand",
-        category="Sample Category",
-        countInStock=0,
-        numReviews=0,
-        description="Sample Description"
-    )
-    product_data = product.model_dump(by_alias=True, exclude={"id"})
+    
+    product_data = product_in.model_dump(by_alias=True, exclude={"id", "_id"})
     if "_id" in product_data:
         del product_data["_id"]
     

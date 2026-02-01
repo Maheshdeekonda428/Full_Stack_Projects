@@ -56,10 +56,11 @@ const ProductForm = () => {
     }, [product]);
 
     const createMutation = useMutation({
-        mutationFn: () => productService.createProduct(),
+        mutationFn: (data) => productService.createProduct(data),
         onSuccess: (data) => {
             queryClient.invalidateQueries(['products']);
-            navigate(`/admin/products/edit/${data._id}`);
+            toast.success('Product created successfully');
+            navigate(`/admin/products`);
         },
         onError: () => {
             toast.error('Failed to create product');
@@ -72,6 +73,7 @@ const ProductForm = () => {
             queryClient.invalidateQueries(['products']);
             queryClient.invalidateQueries(['product', id]);
             toast.success('Product updated successfully');
+            navigate('/admin/products');
         },
         onError: () => {
             toast.error('Failed to update product');
@@ -88,8 +90,12 @@ const ProductForm = () => {
 
     const handleFileSelect = async (e) => {
         const files = Array.from(e.target.files);
-        if (files.length > 3) {
-            toast.error('Maximum 3 images allowed');
+
+        // Check strictly against the limit of 3 images total
+        if (formData.images.length + files.length > 3) {
+            toast.error(`Maximum 3 images allowed. You can add ${3 - formData.images.length} more.`);
+            // Reset the input value so the same file can be selected again if needed
+            e.target.value = '';
             return;
         }
 
@@ -99,11 +105,15 @@ const ProductForm = () => {
         setUploadingImages(true);
         try {
             const imageUrls = await productService.uploadProductImages(files);
-            setFormData(prev => ({
-                ...prev,
-                images: imageUrls,
-                image: imageUrls[0] || '',  // Set first image as primary
-            }));
+            setFormData(prev => {
+                const updatedImages = [...prev.images, ...imageUrls];
+                return {
+                    ...prev,
+                    images: updatedImages,
+                    // Keep existing primary image, or set to first of new list if none existed
+                    image: prev.image || updatedImages[0] || '',
+                };
+            });
             toast.success('Images uploaded successfully');
         } catch (error) {
             toast.error('Failed to upload images');
@@ -149,6 +159,8 @@ const ProductForm = () => {
         e.preventDefault();
         if (isEdit) {
             updateMutation.mutate(formData);
+        } else {
+            createMutation.mutate(formData);
         }
     };
 
@@ -166,29 +178,15 @@ const ProductForm = () => {
                 {isEdit ? 'Edit Product' : 'Add New Product'}
             </h1>
 
-            {!isEdit && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
-                    <h3 className="font-medium text-blue-900 mb-2">Create a New Product</h3>
-                    <p className="text-blue-700 text-sm mb-4">
-                        Click the button below to create a sample product, then customize its details.
-                    </p>
-                    <button
-                        onClick={handleCreate}
-                        disabled={createMutation.isLoading}
-                        className="btn-primary flex items-center gap-2"
-                    >
-                        {createMutation.isLoading ? <Loader size="sm" /> : 'Create Sample Product'}
-                    </button>
-                </div>
-            )}
 
-            {isEdit && (
+            {/* Form Section */}
+            {(
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-md p-6 space-y-6">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Product Name
+                                Product Name <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -203,7 +201,7 @@ const ProductForm = () => {
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Description
+                                Description <span className="text-red-500">*</span>
                             </label>
                             <textarea
                                 name="description"
@@ -237,7 +235,7 @@ const ProductForm = () => {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Brand
+                                    Brand <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="text"
@@ -254,7 +252,7 @@ const ProductForm = () => {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Price (₹)
+                                    Price (₹) <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="number"
@@ -270,7 +268,7 @@ const ProductForm = () => {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Stock Quantity
+                                    Stock Quantity <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="number"
@@ -372,7 +370,7 @@ const ProductForm = () => {
                                 disabled={updateMutation.isLoading}
                                 className="btn-primary flex-1 flex items-center justify-center"
                             >
-                                {updateMutation.isLoading ? <Loader size="sm" /> : 'Save Changes'}
+                                {updateMutation.isLoading || createMutation.isLoading ? <Loader size="sm" /> : (isEdit ? 'Save Changes' : 'Create Product')}
                             </button>
                             <button
                                 type="button"

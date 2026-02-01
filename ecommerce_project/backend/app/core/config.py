@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Settings:
-    PROJECT_NAME: str = "E-commerce API"
+    PROJECT_NAME: str = "ShopSmart API"
     PROJECT_VERSION: str = "1.0.0"
     
     MONGO_URL: str = os.getenv("MONGO_URL", "mongodb://localhost:27017")

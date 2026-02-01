@@ -13,7 +13,7 @@ app.add_middleware(
         "http://localhost:5173",
         # "http://localhost:5174",
         # "http://localhost:5175",
-        # "http://127.0.0.1:5173",
+        "http://127.0.0.1:5173",
         # "http://127.0.0.1:5174",
         # "http://127.0.0.1:5175",
     ],
@@ -42,4 +42,4 @@ app.include_router(users.router, prefix="/api/users", tags=["users"])
 
 @app.get("/")
 async def read_root():
-    return {"message": "Welcome to the E-commerce API"}
+    return {"message": "Welcome to the ShopSmart API"}

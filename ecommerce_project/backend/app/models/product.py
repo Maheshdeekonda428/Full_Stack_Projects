@@ -15,18 +15,18 @@ class Product(BaseModel):
     id: Optional[PyObjectId] = Field(default=None, alias="_id")
     user: Optional[PyObjectId] = None
 
-    name: str
+    name: str = Field(...,)
     image: Optional[str] = ""  # Kept for backward compatibility
     images: List[str] = Field(default_factory=list)  # New: support multiple images
-    brand: Optional[str] = ""
+    brand: str = Field(...,)
     category: Optional[str] = ""
-    description: Optional[str] = ""
+    description: str = Field(...,)
 
     reviews: List[Review] = Field(default_factory=list)
     rating: float = 4.8
-    numReviews: int = "50+"
-    price: float = 0
-    countInStock: int = 100
+    numReviews: int = 50
+    price: float
+    countInStock: int
 
     model_config = ConfigDict(
         populate_by_name=True,

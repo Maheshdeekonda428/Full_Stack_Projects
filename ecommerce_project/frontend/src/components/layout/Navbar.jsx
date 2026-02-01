@@ -52,7 +52,7 @@ const Navbar = () => {
                             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                                 <span className="text-white font-bold text-xl">S</span>
                             </div>
-                            <span className="text-xl font-bold gradient-text">ShopHub</span>
+                            <span className="text-xl font-bold gradient-text">ShopSmart</span>
                         </Link>
 
                         {/* Desktop Search */}
