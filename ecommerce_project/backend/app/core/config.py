@@ -7,14 +7,21 @@ class Settings:
     PROJECT_NAME: str = "ShopSmart API"
     PROJECT_VERSION: str = "1.0.0"
     
-    MONGO_URL: str = os.getenv("MONGO_URL", "mongodb://localhost:27017")
-    DATABASE_NAME: str = os.getenv("DATABASE_NAME", "ecommerce_db")
+    MONGO_URL: str = os.getenv("MONGO_URL")
+    DATABASE_NAME: str = os.getenv("DATABASE_NAME")
     
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your_secret_key_here_please_change_in_prod")
+    SECRET_KEY: str = os.getenv("SECRET_KEY")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
-    admin_email: str = os.getenv("ADMIN_EMAIL", "[EMAIL_ADDRESS]")
-    admin_password: str = os.getenv("ADMIN_PASSWORD", "[PASSWORD]")
+    admin_email: str = os.getenv("ADMIN_EMAIL")
+    admin_password: str = os.getenv("ADMIN_PASSWORD")
+
+    # AWS S3 Settings
+    AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME: str = os.getenv("AWS_BUCKET_NAME")
+    AWS_S3_REGION: str = os.getenv("AWS_REGION")
+    
 
 settings = Settings()

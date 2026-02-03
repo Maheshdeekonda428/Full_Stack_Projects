@@ -10,3 +10,4 @@ pydantic[email]
 python-dotenv
 dnspython
 argon2-cffi
+boto3
