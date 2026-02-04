@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
-from app.core.s3 import upload_file_to_s3
+from app.utils.s3_utilities import upload_file_to_s3
 from typing import List
 from app.core.database import get_database
 from app.models.product import Product
@@ -22,19 +22,6 @@ async def get_products(search: str = ""):
     products = await db.products.find(query).to_list(length=100)
     return products
 
-@router.post("/upload")
-async def upload_image(file: UploadFile = File(...)):
-    allowed_extensions = ["jpg", "jpeg", "png"]
-    if "." not in file.filename:
-         raise HTTPException(status_code=400, detail="Invalid file name")
-         
-    file_ext = file.filename.split(".")[-1].lower()
-    
-    if file_ext not in allowed_extensions:
-        raise HTTPException(status_code=400, detail="Invalid image format. Allowed: jpg, jpeg, png")
-    
-    file_url = upload_file_to_s3(file)
-    return {"image": file_url}
 
 @router.get("/{id}", response_model=Product)
 async def get_product(id: str):

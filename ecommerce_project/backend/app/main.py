@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.core.database import connect_to_mongo, close_mongo_connection
-from app.api import auth, products, orders, users
+from app.api import auth, products, orders, users, upload
 import os
 
 app = FastAPI()
@@ -11,13 +11,13 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        # "http://localhost:5174",
-        # "http://localhost:5175",
+        "http://localhost:5174",
+        "http://localhost:5175",
         "http://127.0.0.1:5173",
-        # "http://127.0.0.1:5174",
-        # "http://127.0.0.1:5175",
-        # "http://localhost:3000",
-        # "http://127.0.0.1:3000",
+        "http://127.0.0.1:5174",
+        "http://127.0.0.1:5175",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
     ],
 
     allow_credentials=True,
@@ -27,7 +27,8 @@ app.add_middleware(
 
 # Static files for uploaded images
 static_path = os.path.join(os.path.dirname(__file__), "..", "static")
-os.makedirs(static_path, exist_ok=True)
+upload_path = os.path.join(static_path, "uploads")
+os.makedirs(upload_path, exist_ok=True)
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 @app.on_event("startup")
@@ -42,7 +43,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(products.router, prefix="/api/products", tags=["products"])
 app.include_router(orders.router, prefix="/api/orders", tags=["orders"])
 app.include_router(users.router, prefix="/api/users", tags=["users"])
-app.include_router(upload.router, prefix="/api/products/upload", tags=["upload"])
+app.include_router(upload.router, prefix="/api/upload", tags=["upload"])
 
 @app.get("/")
 async def read_root():

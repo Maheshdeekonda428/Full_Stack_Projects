@@ -17,11 +17,10 @@ class Settings:
     admin_email: str = os.getenv("ADMIN_EMAIL")
     admin_password: str = os.getenv("ADMIN_PASSWORD")
 
-    # AWS S3 Settings
+    # AWS S3 Configuration
     AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY")
+    AWS_S3_REGION: str = os.getenv("AWS_REGION", "ap-south-1")
     AWS_STORAGE_BUCKET_NAME: str = os.getenv("AWS_BUCKET_NAME")
-    AWS_S3_REGION: str = os.getenv("AWS_REGION")
-    
 
 settings = Settings()
