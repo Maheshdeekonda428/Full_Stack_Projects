@@ -11,6 +11,9 @@ router = APIRouter()
 
 @router.post("/", response_model=Order)
 async def add_order_items(order: Order, current_user: User = Depends(get_current_user)):
+    if current_user.isAdmin:
+        raise HTTPException(status_code=400, detail="Admins cannot place orders")
+        
     db = get_database()
     if not order.orderItems:
          raise HTTPException(status_code=400, detail="No order items")
@@ -30,6 +33,11 @@ async def add_order_items(order: Order, current_user: User = Depends(get_current
 
 @router.get("/myorders", response_model=List[Order])
 async def get_my_orders(current_user: User = Depends(get_current_user)):
+    if current_user.isAdmin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admins cannot have personal orders"
+        )
     db = get_database()
     orders = await db.orders.find({"user": ObjectId(current_user.id)}).to_list(length=100)
     return orders

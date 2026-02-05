@@ -2,22 +2,19 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.core.database import connect_to_mongo, close_mongo_connection
+from app.core.middleware import JWTMiddleware
 from app.api import auth, products, orders, users, upload
 import os
 
 app = FastAPI()
 
+app.add_middleware(JWTMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
-        "http://127.0.0.1:5175",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173"
     ],
 
     allow_credentials=True,

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 from typing import List, Optional
 from app.models.common import PyObjectId
 from pydantic import ConfigDict
@@ -16,7 +16,12 @@ class Product(BaseModel):
     user: Optional[PyObjectId] = None
 
     name: str = Field(...,)
-    image: Optional[str] = ""  # Kept for backward compatibility
+    
+    @computed_field
+    @property
+    def image(self) -> str:
+        return self.images[0] if self.images else ""
+
     images: List[str] = Field(default_factory=list)  # New: support multiple images
     brand: str = Field(...,)
     category: Optional[str] = ""

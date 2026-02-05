@@ -11,4 +11,5 @@ python-dotenv
 dnspython
 argon2-cffi
 boto3
+httpx
 
