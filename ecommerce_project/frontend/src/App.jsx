@@ -13,6 +13,7 @@ import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
 import Checkout from './pages/Checkout';
 import OrderList from './pages/order/OrderList';
+import OrderDetail from './pages/order/OrderDetail';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProducts from './pages/admin/AdminProducts';
 import ProductForm from './pages/admin/ProductForm';
@@ -25,11 +26,23 @@ function App() {
             <Navbar />
             <main className="flex-grow">
                 <Routes>
-                    <Route path="/" element={<Home />} />
+                    <Route path="/" element={
+                        <ProtectedRoute userOnly>
+                            <Home />
+                        </ProtectedRoute>
+                    } />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
-                    <Route path="/products" element={<ProductList />} />
-                    <Route path="/products/:id" element={<ProductDetail />} />
+                    <Route path="/products" element={
+                        <ProtectedRoute userOnly>
+                            <ProductList />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/products/:id" element={
+                        <ProtectedRoute userOnly>
+                            <ProductDetail />
+                        </ProtectedRoute>
+                    } />
 
                     {/* Protected Routes */}
                     <Route path="/cart" element={
@@ -50,6 +63,11 @@ function App() {
                     <Route path="/orders" element={
                         <ProtectedRoute userOnly>
                             <OrderList />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/orders/:id" element={
+                        <ProtectedRoute userOnly>
+                            <OrderDetail />
                         </ProtectedRoute>
                     } />
 

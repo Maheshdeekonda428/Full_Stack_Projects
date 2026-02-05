@@ -74,9 +74,11 @@ const Navbar = () => {
 
                         {/* Desktop Nav Links */}
                         <div className="hidden md:flex items-center space-x-6">
-                            <Link to="/products" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                                Products
-                            </Link>
+                            {!isAdmin && (
+                                <Link to="/products" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+                                    Products
+                                </Link>
+                            )}
 
                             {isAdmin && (
                                 <Link to="/admin" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
@@ -188,9 +190,11 @@ const Navbar = () => {
                                 onKeyDown={handleSearch}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                             />
-                            <Link to="/products" className="block py-2 text-gray-700" onClick={() => setIsMenuOpen(false)}>
-                                Products
-                            </Link>
+                            {!isAdmin && (
+                                <Link to="/products" className="block py-2 text-gray-700" onClick={() => setIsMenuOpen(false)}>
+                                    Products
+                                </Link>
+                            )}
                             {!isAdmin && (
                                 <Link to="/cart" className="flex items-center justify-between py-2 text-gray-700" onClick={() => setIsMenuOpen(false)}>
                                     <span>Cart</span>

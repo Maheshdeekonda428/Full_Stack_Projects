@@ -1,11 +1,30 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useCart } from '../../context/CartContext';
 import orderService from '../../services/orderService';
 import { PageLoader } from '../../components/common/Loader';
 
 const OrderList = () => {
     const [filter, setFilter] = useState('all');
+    const navigate = useNavigate();
+    const { addToCart } = useCart();
+
+    const handleReorder = (order) => {
+        order.orderItems.forEach((item) => {
+            // Reconstruct product object from order item
+            // Note: Use item.product as the _id since that's how it's stored in orderItems
+            const product = {
+                _id: item.product,
+                name: item.name,
+                image: item.image,
+                price: item.price,
+                countInStock: item.countInStock || 10, // Fallback if not provided
+            };
+            addToCart(product, item.qty);
+        });
+        navigate('/cart');
+    };
 
     const { data: orders, isLoading } = useQuery({
         queryKey: ['myOrders'],
@@ -135,7 +154,10 @@ const OrderList = () => {
                                     >
                                         Track Order
                                     </Link>
-                                    <button className="btn-outline text-sm">
+                                    <button
+                                        onClick={() => handleReorder(order)}
+                                        className="btn-outline text-sm"
+                                    >
                                         Reorder
                                     </button>
                                 </div>

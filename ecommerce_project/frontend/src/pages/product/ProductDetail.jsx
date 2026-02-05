@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { PageLoader, ProductSkeleton } from '../../components/common/Loader';
@@ -21,6 +22,7 @@ const getImageUrl = (url) => {
 const ProductDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { isAdmin } = useAuth();
     const { addToCart } = useCart();
     const { addToWishlist, isInWishlist } = useWishlist();
     const [quantity, setQuantity] = useState(1);
@@ -187,7 +189,7 @@ const ProductDetail = () => {
                     </div>
 
                     {/* Quantity & Add to Cart */}
-                    {product.countInStock > 0 && (
+                    {product.countInStock > 0 && !isAdmin && (
                         <div className="mt-8 space-y-4">
                             <div className="flex items-center gap-4">
                                 <span className="text-gray-700 font-medium">Quantity:</span>
