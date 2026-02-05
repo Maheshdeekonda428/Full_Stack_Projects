@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 // Helper function to handle image URLs (local vs web)
 const getImageUrl = (url) => {
     if (!url) return '';
-    if (url.startsWith('http')) return url;
+    if (url.startsWith('http') || url.startsWith('blob:')) return url;
     return `http://localhost:8000${url}`;
 };
 
@@ -30,7 +30,8 @@ const ProductForm = () => {
         brand: '',
     });
 
-    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [selectedFiles, setSelectedFiles] = useState([]); // Array of { file, preview }
+    const [pendingUrls, setPendingUrls] = useState([]); // Array of strings (URLs waiting to be uploaded to S3)
     const [uploadingImages, setUploadingImages] = useState(false);
     const [webImageUrl, setWebImageUrl] = useState('');
 
@@ -54,6 +55,13 @@ const ProductForm = () => {
             });
         }
     }, [product]);
+
+    // Clean up preview URLs on unmount
+    useEffect(() => {
+        return () => {
+            selectedFiles.forEach(f => URL.revokeObjectURL(f.preview));
+        };
+    }, [selectedFiles]);
 
     const createMutation = useMutation({
         mutationFn: (data) => productService.createProduct(data),
@@ -88,54 +96,91 @@ const ProductForm = () => {
         }));
     };
 
-    const handleFileSelect = async (e) => {
+    const handleFileSelect = (e) => {
         const files = Array.from(e.target.files);
 
         // Check strictly against the limit of 3 images total
-        if (formData.images.length + files.length > 3) {
-            toast.error(`Maximum 3 images allowed. You can add ${3 - formData.images.length} more.`);
-            // Reset the input value so the same file can be selected again if needed
+        const totalImages = formData.images.length + selectedFiles.length + pendingUrls.length + files.length;
+        if (totalImages > 3) {
+            toast.error(`Maximum 3 images allowed. You can add ${3 - (formData.images.length + selectedFiles.length + pendingUrls.length)} more.`);
             e.target.value = '';
             return;
         }
 
-        setSelectedFiles(files);
+        const newSelectedFiles = files.map(file => ({
+            file,
+            preview: URL.createObjectURL(file)
+        }));
 
-        // Upload images immediately
-        setUploadingImages(true);
-        try {
-            const imageUrls = await productService.uploadProductImages(files);
-            setFormData(prev => {
-                const updatedImages = [...prev.images, ...imageUrls];
-                return {
-                    ...prev,
-                    images: updatedImages,
-                    // Keep existing primary image, or set to first of new list if none existed
-                    image: prev.image || updatedImages[0] || '',
-                };
-            });
-            toast.success('Images uploaded successfully');
-        } catch (error) {
-            toast.error('Failed to upload images');
-            console.error(error);
-        } finally {
-            setUploadingImages(false);
+        setSelectedFiles(prev => [...prev, ...newSelectedFiles]);
+
+        // If no image is selected yet, set the first new file as the primary preview
+        if (!formData.image && newSelectedFiles.length > 0) {
+            setFormData(prev => ({
+                ...prev,
+                image: newSelectedFiles[0].preview
+            }));
         }
+
+        // Reset the input value
+        e.target.value = '';
     };
 
     const handleRemoveImage = (index) => {
-        setFormData(prev => ({
-            ...prev,
-            images: prev.images.filter((_, i) => i !== index),
-            image: prev.images.filter((_, i) => i !== index)[0] || '',
-        }));
+        const numExisting = formData.images.length;
+        const numPendingUrls = pendingUrls.length;
+
+        // 1. Existing images
+        if (index < numExisting) {
+            setFormData(prev => {
+                const updatedImages = prev.images.filter((_, i) => i !== index);
+                return {
+                    ...prev,
+                    images: updatedImages,
+                    image: updatedImages[0] || pendingUrls[0] || selectedFiles[0]?.preview || '',
+                };
+            });
+        }
+        // 2. Pending Web URLs
+        else if (index < numExisting + numPendingUrls) {
+            const urlIndex = index - numExisting;
+            setPendingUrls(prev => {
+                const updated = prev.filter((_, i) => i !== urlIndex);
+                // Update primary image if this was the primary
+                if (formData.image === prev[urlIndex]) {
+                    setFormData(f => ({
+                        ...f,
+                        image: f.images[0] || updated[0] || selectedFiles[0]?.preview || ''
+                    }));
+                }
+                return updated;
+            });
+        }
+        // 3. Selected Local Files
+        else {
+            const fileIndex = index - numExisting - numPendingUrls;
+            setSelectedFiles(prev => {
+                const removed = prev[fileIndex];
+                if (removed) {
+                    URL.revokeObjectURL(removed.preview);
+                    // Update primary image if this was the primary
+                    if (formData.image === removed.preview) {
+                        setFormData(f => ({
+                            ...f,
+                            image: f.images[0] || pendingUrls[0] || prev.filter((_, i) => i !== fileIndex)[0]?.preview || ''
+                        }));
+                    }
+                }
+                return prev.filter((_, i) => i !== fileIndex);
+            });
+        }
     };
 
     const handleAddWebImageUrl = (e) => {
         e.preventDefault();
         if (!webImageUrl) return;
 
-        if (formData.images.length >= 3) {
+        if (formData.images.length + selectedFiles.length + pendingUrls.length >= 3) {
             toast.error('Maximum 3 images allowed');
             return;
         }
@@ -146,26 +191,60 @@ const ProductForm = () => {
             return;
         }
 
-        setFormData(prev => ({
-            ...prev,
-            images: [...prev.images, webImageUrl],
-            image: prev.image || webImageUrl, // Set as primary if none exists
-        }));
+        setPendingUrls(prev => [...prev, webImageUrl]);
+
+        // Set as primary preview if none exists
+        if (!formData.image) {
+            setFormData(prev => ({ ...prev, image: webImageUrl }));
+        }
+
         setWebImageUrl('');
-        toast.success('Web image added');
+        toast.success('Web image added (pending upload)');
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (isEdit) {
-            updateMutation.mutate(formData);
-        } else {
-            createMutation.mutate(formData);
+        setUploadingImages(true);
+
+        try {
+            let finalImages = [...formData.images];
+
+            // 1. Upload new local files
+            if (selectedFiles.length > 0) {
+                const filesToUpload = selectedFiles.map(f => f.file);
+                const uploadedUrls = await productService.uploadProductImages(filesToUpload);
+                finalImages = [...finalImages, ...uploadedUrls];
+            }
+
+            // 2. Upload pending web URLs to S3
+            if (pendingUrls.length > 0) {
+                const urlUploadTasks = pendingUrls.map(url => productService.uploadImageFromUrl(url));
+                const uploadedUrls = await Promise.all(urlUploadTasks);
+                finalImages = [...finalImages, ...uploadedUrls];
+            }
+
+            // eslint-disable-next-line no-unused-vars
+            const { image: _, ...dataWithoutImage } = formData;
+
+            const submissionData = {
+                ...dataWithoutImage,
+                images: finalImages,
+            };
+
+            if (isEdit) {
+                updateMutation.mutate(submissionData);
+            } else {
+                createMutation.mutate(submissionData);
+            }
+        } catch (error) {
+            toast.error('Failed to upload images');
+            console.error(error);
+            setUploadingImages(false);
         }
     };
 
     const handleCreate = () => {
-        createMutation.mutate();
+        handleSubmit({ preventDefault: () => { } });
     };
 
     const categories = productService.getCategories();
@@ -328,9 +407,9 @@ const ProductForm = () => {
                             </div>
 
                             {/* Image Previews */}
-                            {formData.images.length > 0 && (
+                            {(formData.images.length > 0 || selectedFiles.length > 0 || pendingUrls.length > 0) && (
                                 <div className="mt-4 grid grid-cols-3 gap-4">
-                                    {formData.images.map((imageUrl, index) => (
+                                    {[...formData.images, ...pendingUrls, ...selectedFiles.map(f => f.preview)].map((imageUrl, index) => (
                                         <div key={index} className="relative group">
                                             <img
                                                 src={getImageUrl(imageUrl)}
@@ -349,6 +428,11 @@ const ProductForm = () => {
                                             {index === 0 && (
                                                 <span className="absolute bottom-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
                                                     Primary
+                                                </span>
+                                            )}
+                                            {index >= formData.images.length && (
+                                                <span className="absolute top-2 left-2 bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded uppercase font-bold shadow-sm">
+                                                    Pending
                                                 </span>
                                             )}
                                         </div>

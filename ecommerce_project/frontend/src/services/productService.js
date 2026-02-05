@@ -39,12 +39,17 @@ const productService = {
             formData.append('files', file);
         });
 
-        const response = await api.post('/products/upload', formData, {
+        const response = await api.post('/upload', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
         });
         return response.data.images;
+    },
+
+    async uploadImageFromUrl(url) {
+        const response = await api.post('/upload/url', { url });
+        return response.data.url;
     },
 
     getCategories() {

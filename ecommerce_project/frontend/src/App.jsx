@@ -33,22 +33,22 @@ function App() {
 
                     {/* Protected Routes */}
                     <Route path="/cart" element={
-                        <ProtectedRoute>
+                        <ProtectedRoute userOnly>
                             <Cart />
                         </ProtectedRoute>
                     } />
                     <Route path="/wishlist" element={
-                        <ProtectedRoute>
+                        <ProtectedRoute userOnly>
                             <Wishlist />
                         </ProtectedRoute>
                     } />
                     <Route path="/checkout" element={
-                        <ProtectedRoute>
+                        <ProtectedRoute userOnly>
                             <Checkout />
                         </ProtectedRoute>
                     } />
                     <Route path="/orders" element={
-                        <ProtectedRoute>
+                        <ProtectedRoute userOnly>
                             <OrderList />
                         </ProtectedRoute>
                     } />
