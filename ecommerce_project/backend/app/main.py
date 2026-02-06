@@ -45,3 +45,7 @@ app.include_router(upload.router, prefix="/api/upload", tags=["upload"])
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to the ShopSmart API"}
+
+# AWS Lambda Handler
+from mangum import Mangum
+handler = Mangum(app)

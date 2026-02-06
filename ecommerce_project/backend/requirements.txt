@@ -12,4 +12,5 @@ dnspython
 argon2-cffi
 boto3
 httpx
+mangum
 
