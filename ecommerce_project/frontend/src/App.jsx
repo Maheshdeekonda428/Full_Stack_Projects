@@ -7,6 +7,8 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 import ProductList from './pages/product/ProductList';
 import ProductDetail from './pages/product/ProductDetail';
 import Cart from './pages/Cart';
@@ -19,6 +21,7 @@ import AdminProducts from './pages/admin/AdminProducts';
 import ProductForm from './pages/admin/ProductForm';
 import AdminOrders from './pages/admin/AdminOrders';
 import NotFound from './pages/NotFound';
+
 
 function App() {
     return (
@@ -33,6 +36,8 @@ function App() {
                     } />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password/:token" element={<ResetPassword />} />
                     <Route path="/products" element={
                         <ProtectedRoute userOnly>
                             <ProductList />

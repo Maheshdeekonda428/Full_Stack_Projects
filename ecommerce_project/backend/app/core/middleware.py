@@ -12,11 +12,24 @@ class JWTMiddleware(BaseHTTPMiddleware):
         excluded_paths = [
             "/api/auth/login",
             "/api/auth/register",
+            "/api/auth/refresh",
+            "/api/auth/logout",
+            "/api/auth/forgot-password",
+            "/api/auth/reset-password",
+            "/api/auth/verify-email",
+            "/api/auth/resend-verification-email",
+            "/api/login",
+            "/api/register",
+            "/api/forgot-password",
+            "/api/reset-password",
+            "/api/verify-email",
+            "/api/resend-verification-email",
             "/docs",
             "/redoc",
             "/openapi.json",
             "/static",
             "/",
+            
         ]
 
         # Check if the request path is in the excluded paths or is a GET request to public routes

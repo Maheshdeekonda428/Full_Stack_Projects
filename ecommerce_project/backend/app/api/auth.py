@@ -1,5 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel, EmailStr
+import secrets
+from datetime import datetime, timedelta
 from app.core.database import get_database
 from app.models.user import User
 from app.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token
@@ -8,6 +11,66 @@ from jose import jwt, JWTError
 from bson import ObjectId
 
 router = APIRouter()
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+@router.post("/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest):
+    db = get_database()
+    user = await db.users.find_one({"email": request.email.lower()})
+    if not user:
+        # We don't want to leak if a user exists or not
+        return {"message": "If your email is registered, you will receive a reset link shortly."}
+    
+    reset_token = secrets.token_urlsafe(32)
+    reset_token_expiry = datetime.utcnow() + timedelta(hours=1)
+    
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {
+                "reset_token": reset_token,
+                "reset_token_expiry": reset_token_expiry
+            }
+        }
+    )
+    
+    # Mock sending email
+    reset_link = f"http://localhost:5173/reset-password/{reset_token}"
+    print(f"MOCK EMAIL: Password reset link for {request.email}: {reset_link}")
+    
+    return {"message": "If your email is registered, you will receive a reset link shortly."}
+
+@router.post("/reset-password")
+async def reset_password(request: ResetPasswordRequest):
+    db = get_database()
+    user = await db.users.find_one({
+        "reset_token": request.token,
+        "reset_token_expiry": {"$gt": datetime.utcnow()}
+    })
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+    
+    hashed_password = get_password_hash(request.new_password)
+    
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {"password": hashed_password},
+            "$unset": {"reset_token": "", "reset_token_expiry": ""}
+        }
+    )
+    
+    return {"message": "Password reset successfully"}
 
 @router.post("/login")
 async def login(res: Response, form_data: OAuth2PasswordRequestForm = Depends()):
@@ -48,7 +111,7 @@ async def login(res: Response, form_data: OAuth2PasswordRequestForm = Depends())
         value=refresh_token,
         httponly=True,
         max_age=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
-        expires=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
+        # expires=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
         samesite="lax",
         secure=False, # Set to True in production with HTTPS
     )
