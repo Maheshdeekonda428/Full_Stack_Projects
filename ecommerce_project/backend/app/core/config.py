@@ -12,8 +12,8 @@ class Settings:
     
     SECRET_KEY: str = os.getenv("SECRET_KEY")
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1  # 1 minutes
-    REFRESH_TOKEN_EXPIRE_MINUTES: int = 5  # 5 minutes for testing
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30 # 30 minutes
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days
 
     admin_email: str = os.getenv("ADMIN_EMAIL")
     admin_password: str = os.getenv("ADMIN_PASSWORD")

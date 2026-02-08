@@ -38,7 +38,7 @@ async def get_product(id: str):
 async def create_product(product_in: Product):
     db = get_database()
     
-    product_data = product_in.model_dump(by_alias=True, exclude={"id", "_id"})
+    product_data = product_in.model_dump(by_alias=True, exclude={"id", "_id", "image"})
     if "_id" in product_data:
         del product_data["_id"]
     
@@ -58,7 +58,7 @@ async def update_product(id: str, product_update: Product):
 
     product = await db.products.find_one({"_id":ObjectId(id)})
     if product:
-        update_data = product_update.model_dump(exclude_unset=True)
+        update_data = product_update.model_dump(exclude_unset=True, exclude={"image"})
         # Avoid updating _id
         if "_id" in update_data:
             del update_data["_id"]
