@@ -29,37 +29,17 @@ function App() {
             <Navbar />
             <main className="flex-grow">
                 <Routes>
-                    <Route path="/" element={
-                        <ProtectedRoute userOnly>
-                            <Home />
-                        </ProtectedRoute>
-                    } />
+                    <Route path="/" element={<Home />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/reset-password/:token" element={<ResetPassword />} />
-                    <Route path="/products" element={
-                        <ProtectedRoute userOnly>
-                            <ProductList />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/products/:id" element={
-                        <ProtectedRoute userOnly>
-                            <ProductDetail />
-                        </ProtectedRoute>
-                    } />
+                    <Route path="/products" element={<ProductList />} />
+                    <Route path="/products/:id" element={<ProductDetail />} />
 
                     {/* Protected Routes */}
-                    <Route path="/cart" element={
-                        <ProtectedRoute userOnly>
-                            <Cart />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/wishlist" element={
-                        <ProtectedRoute userOnly>
-                            <Wishlist />
-                        </ProtectedRoute>
-                    } />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route path="/wishlist" element={<Wishlist />} />
                     <Route path="/checkout" element={
                         <ProtectedRoute userOnly>
                             <Checkout />

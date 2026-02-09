@@ -13,6 +13,7 @@ class User(BaseModel):
     isAdmin: bool = False
     reset_token: Optional[str] = None
     reset_token_expiry: Optional[datetime] = None
+    last_reset_request: Optional[datetime] = None
 
     model_config = ConfigDict(
         populate_by_name=True,

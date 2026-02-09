@@ -11,6 +11,9 @@ class JWTMiddleware(BaseHTTPMiddleware):
         # List of paths that do not require authentication
         excluded_paths = [
             "/api/auth/login",
+            "/api/auth/google/login",
+            "/api/auth/google/callback",
+            "/api/auth/google-login",
             "/api/auth/register",
             "/api/auth/refresh",
             "/api/auth/logout",
@@ -19,6 +22,8 @@ class JWTMiddleware(BaseHTTPMiddleware):
             "/api/auth/verify-email",
             "/api/auth/resend-verification-email",
             "/api/login",
+            "/api/google/login",
+            "/api/google/callback",
             "/api/register",
             "/api/forgot-password",
             "/api/reset-password",

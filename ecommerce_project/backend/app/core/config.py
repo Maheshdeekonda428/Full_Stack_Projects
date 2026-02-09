@@ -23,5 +23,6 @@ class Settings:
     AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY")
     AWS_S3_REGION: str = os.getenv("AWS_REGION", "ap-south-1")
     AWS_STORAGE_BUCKET_NAME: str = os.getenv("AWS_BUCKET_NAME")
+    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID")
 
 settings = Settings()

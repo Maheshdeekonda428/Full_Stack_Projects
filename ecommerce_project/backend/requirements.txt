@@ -13,3 +13,5 @@ argon2-cffi
 boto3
 httpx
 mangum
+google-auth
+requests

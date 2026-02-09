@@ -41,6 +41,22 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const googleLogin = async (token) => {
+        try {
+            setLoading(true);
+            const response = await authService.googleLogin(token);
+            setUser(response.user);
+            toast.success('Google login successful!');
+            return { success: true, ...response };
+        } catch (error) {
+            const message = error.response?.data?.detail || 'Google login failed';
+            toast.error(message);
+            return { success: false, error: message };
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const register = async (userData) => {
         try {
             setLoading(true);
@@ -63,12 +79,19 @@ export const AuthProvider = ({ children }) => {
         toast.success('Logged out successfully');
     };
 
+    const updateUser = (userData) => {
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+    };
+
     const value = {
         user,
         loading,
         login,
+        googleLogin,
         register,
         logout,
+        updateUser,
         isAuthenticated: !!user,
         isAdmin: user?.isAdmin || false,
     };

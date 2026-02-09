@@ -6,6 +6,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App';
 import './index.css';
 
@@ -19,38 +20,42 @@ const queryClient = new QueryClient({
     },
 });
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
-        <BrowserRouter>
-            <QueryClientProvider client={queryClient}>
-                <AuthProvider>
-                    <CartProvider>
-                        <WishlistProvider>
-                            <App />
-                            <Toaster
-                                position="top-right"
-                                toastOptions={{
-                                    duration: 3000,
-                                    style: {
-                                        background: '#363636',
-                                        color: '#fff',
-                                    },
-                                    success: {
+        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+            <BrowserRouter>
+                <QueryClientProvider client={queryClient}>
+                    <AuthProvider>
+                        <CartProvider>
+                            <WishlistProvider>
+                                <App />
+                                <Toaster
+                                    position="top-right"
+                                    toastOptions={{
+                                        duration: 3000,
                                         style: {
-                                            background: '#22c55e',
+                                            background: '#363636',
+                                            color: '#fff',
                                         },
-                                    },
-                                    error: {
-                                        style: {
-                                            background: '#ef4444',
+                                        success: {
+                                            style: {
+                                                background: '#22c55e',
+                                            },
                                         },
-                                    },
-                                }}
-                            />
-                        </WishlistProvider>
-                    </CartProvider>
-                </AuthProvider>
-            </QueryClientProvider>
-        </BrowserRouter>
+                                        error: {
+                                            style: {
+                                                background: '#ef4444',
+                                            },
+                                        },
+                                    }}
+                                />
+                            </WishlistProvider>
+                        </CartProvider>
+                    </AuthProvider>
+                </QueryClientProvider>
+            </BrowserRouter>
+        </GoogleOAuthProvider>
     </React.StrictMode>
 );
