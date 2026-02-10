@@ -87,7 +87,10 @@ async def reset_password(request: ResetPasswordRequest):
         }
     )
     
-    return {"message": "Password reset successfully"}
+    return {
+        "message": "Password reset successfully",
+        "email": user["email"]
+    }
 
 @router.post("/login")
 async def login(res: Response, form_data: OAuth2PasswordRequestForm = Depends()):

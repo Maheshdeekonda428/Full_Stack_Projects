@@ -2,8 +2,10 @@ import { useState } from 'react';
 import userService from '../../services/userService';
 import toast from 'react-hot-toast';
 import Loader from '../common/Loader';
+import { useAuth } from '../../context/AuthContext';
 
 const SetPasswordModal = ({ user, onSuccess }) => {
+    const { storeCredentials } = useAuth();
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -26,6 +28,7 @@ const SetPasswordModal = ({ user, onSuccess }) => {
                 email: user.email,
                 password
             });
+            await storeCredentials(user.email, password);
             toast.success('Password set successfully! Your browser may ask to save it.');
             onSuccess();
         } catch (error) {
@@ -51,28 +54,42 @@ const SetPasswordModal = ({ user, onSuccess }) => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Hidden username field for browser password managers */}
+                    <input
+                        type="hidden"
+                        name="username"
+                        defaultValue={user?.email || ''}
+                        autoComplete="username"
+                    />
+
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="password">
                             New Password
                         </label>
                         <input
                             type="password"
+                            id="password"
+                            name="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
+                            autoComplete="new-password"
                             className="input-field"
                             placeholder="••••••••"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="confirmPassword">
                             Confirm Password
                         </label>
                         <input
                             type="password"
+                            id="confirmPassword"
+                            name="confirmPassword"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             required
+                            autoComplete="new-password"
                             className="input-field"
                             placeholder="••••••••"
                         />

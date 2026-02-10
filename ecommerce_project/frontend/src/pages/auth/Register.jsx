@@ -6,7 +6,7 @@ import Loader from '../../components/common/Loader';
 const Register = () => {
     const [formData, setFormData] = useState({
         name: '',
-        email: '',
+        username: '', // Renamed from email
         password: '',
         confirmPassword: '',
     });
@@ -17,7 +17,7 @@ const Register = () => {
     const [strength, setStrength] = useState(0);
     const [passwordMatch, setPasswordMatch] = useState(null); // null, true, false
 
-    const { register } = useAuth();
+    const { register, storeCredentials } = useAuth();
     const navigate = useNavigate();
 
     const calculateStrength = (pass) => {
@@ -54,7 +54,7 @@ const Register = () => {
     const validate = () => {
         const newErrors = {};
         if (!formData.name) newErrors.name = 'Name is required';
-        if (!formData.email) newErrors.email = 'Email is required';
+        if (!formData.username) newErrors.username = 'Email is required';
         if (!formData.password) newErrors.password = 'Password is required';
         if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
         if (strength < 1) newErrors.password = 'Please choose a stronger password';
@@ -73,11 +73,15 @@ const Register = () => {
 
         const result = await register({
             name: formData.name,
-            email: formData.email,
+            email: formData.username, // Map username back to email for API
             password: formData.password,
         });
 
         if (result.success) {
+            // Store credentials for the new account and wait for it
+            console.log('Registering: Storing credentials...');
+            await storeCredentials(formData.username, formData.password);
+
             navigate('/');
         }
 
@@ -100,14 +104,16 @@ const Register = () => {
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-1">
-                            <label className="block text-sm font-semibold text-gray-700 ml-1">
+                            <label className="block text-sm font-semibold text-gray-700 ml-1" htmlFor="name">
                                 Full Name
                             </label>
                             <input
                                 type="text"
+                                id="name"
                                 name="name"
                                 value={formData.name}
                                 onChange={handleChange}
+                                autoComplete="name"
                                 className={`input-field rounded-2xl py-3 shadow-sm ${errors.name ? 'border-red-500 ring-red-500/10' : 'border-gray-200 focus:border-blue-500'}`}
                                 placeholder="John Doe"
                             />
@@ -115,30 +121,34 @@ const Register = () => {
                         </div>
 
                         <div className="space-y-1">
-                            <label className="block text-sm font-semibold text-gray-700 ml-1">
+                            <label className="block text-sm font-semibold text-gray-700 ml-1" htmlFor="username">
                                 Email Address
                             </label>
                             <input
                                 type="email"
-                                name="email"
-                                value={formData.email}
+                                id="username"
+                                name="username"
+                                value={formData.username}
                                 onChange={handleChange}
-                                className={`input-field rounded-2xl py-3 shadow-sm ${errors.email ? 'border-red-500 ring-red-500/10' : 'border-gray-200 focus:border-blue-500'}`}
+                                autoComplete="username"
+                                className={`input-field rounded-2xl py-3 shadow-sm ${errors.username ? 'border-red-500 ring-red-500/10' : 'border-gray-200 focus:border-blue-500'}`}
                                 placeholder="you@example.com"
                             />
-                            {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email}</p>}
+                            {errors.username && <p className="text-red-500 text-xs mt-1 ml-1">{errors.username}</p>}
                         </div>
 
                         <div className="space-y-1">
-                            <label className="block text-sm font-semibold text-gray-700 ml-1">
+                            <label className="block text-sm font-semibold text-gray-700 ml-1" htmlFor="password">
                                 Password
                             </label>
                             <div className="relative group">
                                 <input
                                     type={showPassword ? 'text' : 'password'}
+                                    id="password"
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
+                                    autoComplete="new-password"
                                     className={`input-field rounded-2xl py-3 pr-12 shadow-sm transition-all ${errors.password ? 'border-red-500 ring-red-500/10' : 'border-gray-200 focus:border-blue-500'}`}
                                     placeholder="••••••••"
                                 />
@@ -178,15 +188,17 @@ const Register = () => {
                         </div>
 
                         <div className="space-y-1">
-                            <label className="block text-sm font-semibold text-gray-700 ml-1">
+                            <label className="block text-sm font-semibold text-gray-700 ml-1" htmlFor="confirmPassword">
                                 Confirm Password
                             </label>
                             <div className="relative group">
                                 <input
                                     type={showConfirmPassword ? 'text' : 'password'}
+                                    id="confirmPassword"
                                     name="confirmPassword"
                                     value={formData.confirmPassword}
                                     onChange={handleChange}
+                                    autoComplete="new-password"
                                     className={`input-field rounded-2xl py-3 pr-12 shadow-sm transition-all ${passwordMatch === true ? 'border-green-500' :
                                         passwordMatch === false ? 'border-red-500' :
                                             'border-gray-200 focus:border-blue-500'

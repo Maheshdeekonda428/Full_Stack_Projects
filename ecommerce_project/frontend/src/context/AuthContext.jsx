@@ -24,17 +24,26 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
-    const login = async (credentials) => {
+    const login = async (credentials, isSilent = false) => {
         try {
             setLoading(true);
+            console.log('AuthContext: Calling authService.login...');
+            const startTime = Date.now();
             await authService.login(credentials);
+            console.log(`AuthContext: authService.login finished in ${Date.now() - startTime}ms`);
+
             const currentUser = authService.getCurrentUser();
             setUser(currentUser);
-            toast.success('Login successful!');
+            if (!isSilent) {
+                toast.success('Login successful!');
+            }
             return { success: true };
         } catch (error) {
+            console.error('AuthContext: login error:', error);
             const message = error.response?.data?.detail || 'Login failed';
-            toast.error(message);
+            if (!isSilent) {
+                toast.error(message);
+            }
             return { success: false, error: message };
         } finally {
             setLoading(false);
@@ -84,6 +93,33 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(userData));
     };
 
+    const storeCredentials = async (email, password, displayName = null) => {
+        if (window.PasswordCredential && navigator.credentials?.store) {
+            try {
+                console.log('AuthContext: Attempting to store credentials for:', email);
+                // Construct the credential object
+                const cred = new window.PasswordCredential({
+                    id: email,
+                    password: password,
+                    name: displayName || user?.name || email,
+                    // iconURL: window.location.origin + '/logo192.png'
+                });
+
+                // Store it - this usually triggers the browser's "Save Password" prompt
+                // if it's called during a user gesture (like a button click)
+                await navigator.credentials.store(cred);
+                console.log('AuthContext: Credentials stored successfully via Credential Management API');
+                return true;
+            } catch (err) {
+                console.warn('AuthContext: Credential Management API error:', err);
+                return false;
+            }
+        } else {
+            console.log('AuthContext: Credential Management API or PasswordCredential not supported in this browser.');
+            return false;
+        }
+    };
+
     const value = {
         user,
         loading,
@@ -92,6 +128,7 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         updateUser,
+        storeCredentials,
         isAuthenticated: !!user,
         isAdmin: user?.isAdmin || false,
     };

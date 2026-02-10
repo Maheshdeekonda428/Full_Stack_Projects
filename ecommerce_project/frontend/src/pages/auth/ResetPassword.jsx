@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import Loader from '../../components/common/Loader';
 import toast from 'react-hot-toast';
 
@@ -8,9 +9,11 @@ const ResetPassword = () => {
     const { token } = useParams();
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
+        username: '', // email hint for browser
         password: '',
         confirmPassword: '',
     });
+    const { storeCredentials } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -61,8 +64,20 @@ const ResetPassword = () => {
                 token,
                 new_password: formData.password
             });
+
+            const email = response.data.email;
+            if (email) {
+                setFormData(prev => ({ ...prev, username: email }));
+                console.log('ResetPassword: Storing updated credentials for:', email);
+                await storeCredentials(email, formData.password);
+            }
+
             toast.success(response.data.message);
-            navigate('/login');
+
+            // Small delay to ensure browser saw the value in the hidden field before navigation
+            setTimeout(() => {
+                navigate('/login');
+            }, 500);
         } catch (error) {
             // Error handling managed by interceptor
         } finally {
@@ -85,17 +100,28 @@ const ResetPassword = () => {
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Hidden username field - Using email from backend to help browser save */}
+                        <input
+                            type="hidden"
+                            name="username"
+                            autoComplete="username"
+                            value={formData.username}
+                            onChange={() => { }} // Read-only for browser hint
+                        />
+
                         <div className="space-y-2">
-                            <label className="block text-sm font-semibold text-gray-700 ml-1">
+                            <label className="block text-sm font-semibold text-gray-700 ml-1" htmlFor="password">
                                 New Password
                             </label>
                             <div className="relative group">
                                 <input
                                     type={showPassword ? 'text' : 'password'}
+                                    id="password"
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
                                     required
+                                    autoComplete="new-password"
                                     className="input-field py-3.5 rounded-2xl border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 pr-12"
                                     placeholder="••••••••"
                                 />
@@ -132,16 +158,18 @@ const ResetPassword = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="block text-sm font-semibold text-gray-700 ml-1">
+                            <label className="block text-sm font-semibold text-gray-700 ml-1" htmlFor="confirmPassword">
                                 Verify Password
                             </label>
                             <div className="relative group">
                                 <input
                                     type="password"
+                                    id="confirmPassword"
                                     name="confirmPassword"
                                     value={formData.confirmPassword}
                                     onChange={handleChange}
                                     required
+                                    autoComplete="new-password"
                                     className={`input-field py-3.5 rounded-2xl border-gray-200 focus:ring-4 transition-all text-gray-900 ${passwordMatch === true ? 'border-green-500 focus:border-green-500 focus:ring-green-500/10' :
                                         passwordMatch === false ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' :
                                             'focus:border-blue-500 focus:ring-blue-500/10'
