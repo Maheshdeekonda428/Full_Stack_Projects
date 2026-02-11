@@ -1,29 +1,46 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCart } from '../../context/CartContext';
 import orderService from '../../services/orderService';
 import { PageLoader } from '../../components/common/Loader';
+import toast from 'react-hot-toast';
 
 const OrderList = () => {
     const [filter, setFilter] = useState('all');
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { addToCart } = useCart();
 
     const handleReorder = (order) => {
         order.orderItems.forEach((item) => {
-            // Reconstruct product object from order item
-            // Note: Use item.product as the _id since that's how it's stored in orderItems
             const product = {
                 _id: item.product,
                 name: item.name,
                 image: item.image,
                 price: item.price,
-                countInStock: item.countInStock || 10, // Fallback if not provided
+                countInStock: item.countInStock || 10,
             };
             addToCart(product, item.qty);
         });
         navigate('/cart');
+    };
+
+    const deleteMutation = useMutation({
+        mutationFn: (orderId) => orderService.deleteOrder(orderId),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['myOrders']);
+            toast.success('Order deleted successfully');
+        },
+        onError: (err) => {
+            toast.error(err.response?.data?.detail || 'Failed to delete order');
+        },
+    });
+
+    const handleDeleteOrder = (orderId) => {
+        if (window.confirm('Are you sure you want to delete this order?')) {
+            deleteMutation.mutate(orderId);
+        }
     };
 
     const { data: orders, isLoading } = useQuery({
@@ -160,6 +177,18 @@ const OrderList = () => {
                                     >
                                         Reorder
                                     </button>
+                                    {order.isDelivered && (
+                                        <button
+                                            onClick={() => handleDeleteOrder(order._id)}
+                                            disabled={deleteMutation.isLoading}
+                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-auto"
+                                            title="Delete Order"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>

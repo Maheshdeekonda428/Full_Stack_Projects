@@ -20,6 +20,11 @@ export const orderService = {
         const response = await api.put(`/orders/${id}/pay`, paymentResult);
         return response.data;
     },
+
+    async deleteOrder(id) {
+        const response = await api.delete(`/orders/${id}`);
+        return response.data;
+    },
 };
 
 export default orderService;

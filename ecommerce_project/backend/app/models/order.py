@@ -41,6 +41,7 @@ class Order(BaseModel):
     paidAt: Optional[datetime] = None
     isDelivered: bool = False
     deliveredAt: Optional[datetime] = None
+    isUserDeleted: bool = False
     createdAt: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = ConfigDict(
