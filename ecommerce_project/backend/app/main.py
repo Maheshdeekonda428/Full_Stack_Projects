@@ -51,5 +51,3 @@ async def read_root():
 # AWS Lambda Handler
 from mangum import Mangum
 handler = Mangum(app)
-
-# trigger restart

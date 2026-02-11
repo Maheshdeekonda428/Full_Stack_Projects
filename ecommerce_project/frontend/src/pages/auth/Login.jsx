@@ -12,20 +12,13 @@ const Login = () => {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isUnlocked, setIsUnlocked] = useState(false);
-    const [silentLoginActive, setSilentLoginActive] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
 
-    const { login, googleLogin, updateUser, storeCredentials } = useAuth();
+    const { login, googleLogin } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
-
     const from = location.state?.from?.pathname || '/';
-
-    const handleFocus = () => {
-        setIsUnlocked(true);
-    };
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -34,43 +27,21 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        console.log('--- Login Attempt Start ---');
-        // Map username back to email for the login service
-        const loginData = { email: formData.username, password: formData.password };
-        console.log('Login data:', { ...loginData, password: '***' });
-
         try {
-            const result = await login(loginData, silentLoginActive);
-            console.log('Login result:', result);
+            const loginData = { email: formData.username, password: formData.password };
+            const result = await login(loginData);
 
             if (result.success) {
-                // Save email if remember me is checked
                 if (rememberMe) {
                     localStorage.setItem('rememberedEmail', formData.username);
                 } else {
                     localStorage.removeItem('rememberedEmail');
                 }
-
-                // Explicitly prompt to save credentials (NON-BLOCKING but AWAITED for UI consistency)
-                if (!silentLoginActive) {
-                    console.log('Triggering credential storage...');
-                    await storeCredentials(formData.username, formData.password);
-                }
-
-                // If it's a silent login for a new Google user, we navigate immediately.
-                if (silentLoginActive) {
-                    console.log('Silent login successful. Navigating...');
-                }
-
-                console.log('Navigating to:', from);
                 navigate(from, { replace: true });
-            } else {
-                console.log('Login failed:', result.error);
             }
         } catch (err) {
             console.error('Fatal error in handleSubmit:', err);
         } finally {
-            console.log('--- Login Attempt End ---');
             setIsSubmitting(false);
         }
     };
@@ -78,66 +49,15 @@ const Login = () => {
     const handleGoogleSuccess = async (credentialResponse) => {
         setIsSubmitting(true);
         try {
-            console.log('Google login success result:', credentialResponse);
             const result = await googleLogin(credentialResponse.credential);
-            console.log('Backend authentication result:', result);
-
             if (result.success) {
-                if (result.generated_password) {
-                    console.log('New user detected! Triggering automated silent login for password save...');
-                    setSilentLoginActive(true);
-                    setFormData({
-                        username: result.user.email,
-                        password: result.generated_password
-                    });
-                    setIsUnlocked(true);
-                    // setShowPassword(true); // Removed as per user request: "dont show pass word"
-
-                    // Minimal delay to ensure React has rendered the data into the DOM
-                    setTimeout(async () => {
-                        const emailInput = document.getElementById('username');
-                        const passwordInput = document.getElementById('password');
-                        const submitBtn = document.querySelector('button[type="submit"]');
-
-                        if (emailInput && passwordInput && submitBtn) {
-                            console.log('Finalizing automated save...');
-
-                            // Force events for browser detection
-                            emailInput.dispatchEvent(new Event('input', { bubbles: true }));
-                            passwordInput.dispatchEvent(new Event('input', { bubbles: true }));
-
-                            // Enable the button so the click is valid
-                            setIsSubmitting(false);
-
-                            // Trigger save and wait for it
-                            console.log('Storing credentials for automated save...');
-                            await storeCredentials(result.user.email, result.generated_password, result.user.name);
-
-                            // Immediate-ish click (small delay for re-render)
-                            setTimeout(() => {
-                                if (submitBtn.disabled) submitBtn.disabled = false;
-                                console.log('Programmatically clicking submit button...');
-                                submitBtn.click();
-                            }, 100);
-                        } else {
-                            console.log('Automated submission elements missing, navigating normally.');
-                            navigate(from, { replace: true });
-                        }
-                    }, 300); // Fast delay
-                } else {
-                    console.log('Existing user, navigating to destination.');
-                    navigate(from, { replace: true });
-                }
+                navigate(from, { replace: true });
             }
         } catch (error) {
             console.error('Error in handleGoogleSuccess:', error);
             toast.error('Google login failed. Please try again.');
         } finally {
-            // We don't setIsSubmitting(false) if silent login is active, 
-            // as the form submission will handle the navigation/state
-            if (!silentLoginActive) {
-                setIsSubmitting(false);
-            }
+            setIsSubmitting(false);
         }
     };
 
@@ -158,7 +78,7 @@ const Login = () => {
                         </div>
                         <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Welcome Back</h1>
                         <p className="text-gray-500 mt-3 text-lg leading-relaxed">
-                            {silentLoginActive ? 'Finishing secure sign-in...' : 'Sign in to sync your wishlist and cart.'}
+                            Sign in to sync your wishlist and cart.
                         </p>
                     </div>
 
@@ -186,7 +106,6 @@ const Login = () => {
                                     name="username"
                                     value={formData.username}
                                     onChange={handleChange}
-                                    onFocus={handleFocus}
                                     required
                                     autoComplete="username"
                                     className="input-field pl-11 py-3.5 rounded-2xl border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 placeholder:text-gray-400"
@@ -211,7 +130,6 @@ const Login = () => {
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
-                                    onFocus={handleFocus}
                                     required
                                     autoComplete="current-password"
                                     className="input-field pl-11 pr-12 py-3.5 rounded-2xl border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-gray-900 placeholder:text-gray-400"

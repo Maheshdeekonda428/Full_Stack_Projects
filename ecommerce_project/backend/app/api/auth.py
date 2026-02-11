@@ -131,7 +131,6 @@ async def login(res: Response, form_data: OAuth2PasswordRequestForm = Depends())
         value=refresh_token,
         httponly=True,
         max_age=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
-        # expires=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
         samesite="lax",
         secure=False, # Set to True in production with HTTPS
     )

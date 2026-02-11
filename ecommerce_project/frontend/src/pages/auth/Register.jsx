@@ -17,13 +17,13 @@ const Register = () => {
     const [strength, setStrength] = useState(0);
     const [passwordMatch, setPasswordMatch] = useState(null); // null, true, false
 
-    const { register, storeCredentials } = useAuth();
+    const { register } = useAuth();
     const navigate = useNavigate();
 
     const calculateStrength = (pass) => {
         let score = 0;
-        if (pass.length > 5) score++;
-        if (/[A-Z]/.test(pass)) score++;
+        if (pass.length >= 8) score++;
+        if (/[A-Z]/.test(pass) && /[a-z]/.test(pass)) score++;
         if (/[0-9]/.test(pass)) score++;
         if (/[^A-Za-z0-9]/.test(pass)) score++;
         setStrength(score);
@@ -55,9 +55,20 @@ const Register = () => {
         const newErrors = {};
         if (!formData.name) newErrors.name = 'Name is required';
         if (!formData.username) newErrors.username = 'Email is required';
-        if (!formData.password) newErrors.password = 'Password is required';
-        if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-        if (strength < 1) newErrors.password = 'Please choose a stronger password';
+
+        const password = formData.password;
+        if (!password) {
+            newErrors.password = 'Password is required';
+        } else if (password.length < 8) {
+            newErrors.password = 'Min 8 characters required';
+        } else if (!/[A-Z]/.test(password) || !/[a-z]/.test(password)) {
+            newErrors.password = 'Must contain upper & lower case';
+        } else if (!/[0-9]/.test(password)) {
+            newErrors.password = 'Must contain at least one number';
+        } else if (!/[^A-Za-z0-9]/.test(password)) {
+            newErrors.password = 'Must contain a special character';
+        }
+
         if (formData.password !== formData.confirmPassword) {
             newErrors.confirmPassword = 'Passwords do not match';
         }
@@ -78,10 +89,6 @@ const Register = () => {
         });
 
         if (result.success) {
-            // Store credentials for the new account and wait for it
-            console.log('Registering: Storing credentials...');
-            await storeCredentials(formData.username, formData.password);
-
             navigate('/');
         }
 
@@ -177,9 +184,34 @@ const Register = () => {
                                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Strength</span>
                                         <span className={`text-[10px] font-bold uppercase ${strength > 2 ? 'text-green-600' : 'text-gray-500'}`}>{strengthLabel}</span>
                                     </div>
-                                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden flex gap-1">
+                                    <div className="h-1.2 w-full bg-gray-100 rounded-full overflow-hidden flex gap-1 mb-3">
                                         {[1, 2, 3, 4].map((step) => (
                                             <div key={step} className={`h-full flex-1 transition-all duration-500 ${strength >= step ? strengthColor : 'bg-gray-200'}`} />
+                                        ))}
+                                    </div>
+
+                                    {/* Password Requirements List */}
+                                    <div className="grid grid-cols-2 gap-y-1.5 ml-1 animate-fade-in-down">
+                                        {[
+                                            { label: '8+ Characters', met: formData.password.length >= 8 },
+                                            { label: 'Upper & Lower', met: /[A-Z]/.test(formData.password) && /[a-z]/.test(formData.password) },
+                                            { label: 'One Number', met: /[0-9]/.test(formData.password) },
+                                            { label: 'Special Char', met: /[^A-Za-z0-9]/.test(formData.password) },
+                                        ].map((req, i) => (
+                                            <div key={i} className="flex items-center gap-1.5">
+                                                <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center transition-colors ${req.met ? 'bg-green-100' : 'bg-gray-100'}`}>
+                                                    {req.met ? (
+                                                        <svg className="w-2 h-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                        </svg>
+                                                    ) : (
+                                                        <div className="w-1 h-1 bg-gray-400 rounded-full" />
+                                                    )}
+                                                </div>
+                                                <span className={`text-[10px] font-medium transition-colors ${req.met ? 'text-green-600' : 'text-gray-400'}`}>
+                                                    {req.label}
+                                                </span>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
