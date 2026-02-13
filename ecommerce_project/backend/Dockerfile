@@ -9,7 +9,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code and static files
 COPY ./app ./app
-COPY ./static ./static
 
 # Set the CMD to your handler (app.main.handler)
 CMD ["app.main.handler"]

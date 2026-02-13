@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+# from fastapi.staticfiles import StaticFiles
 from app.core.database import connect_to_mongo, close_mongo_connection
 from app.core.middleware import JWTMiddleware
 from app.api import auth, products, orders, users, upload
-import os
+# import os
 
 app = FastAPI()
 
@@ -13,6 +13,7 @@ app.add_middleware(JWTMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "https://d4pfdf5xz48rd.cloudfront.net",
         "http://localhost:5173",
         "http://localhost:5174",
         "http://127.0.0.1:5173",
@@ -24,11 +25,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Static files for uploaded images
-static_path = os.path.join(os.path.dirname(__file__), "..", "static")
-upload_path = os.path.join(static_path, "uploads")
-os.makedirs(upload_path, exist_ok=True)
-app.mount("/static", StaticFiles(directory=static_path), name="static")
+# # Static files for uploaded images
+# static_path = os.path.join(os.path.dirname(__file__), "..", "static")
+# upload_path = os.path.join(static_path, "uploads")
+# os.makedirs(upload_path, exist_ok=True)
+# app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 @app.on_event("startup")
 async def startup_db_client():
@@ -50,4 +51,4 @@ async def read_root():
 
 # AWS Lambda Handler
 from mangum import Mangum
-handler = Mangum(app)
+handler = Mangum(app, api_gateway_base_path="/dev")
