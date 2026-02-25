@@ -8,8 +8,8 @@ from app.api import auth, products, orders, users, upload
 
 app = FastAPI()
 
+# Order Matters: JWTMiddleware first, then CORSMiddleware to wrap the response
 app.add_middleware(JWTMiddleware)
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
