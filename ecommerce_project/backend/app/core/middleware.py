@@ -59,6 +59,11 @@ class JWTMiddleware(BaseHTTPMiddleware):
         try:
             # Decode the token
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            
+            # Prevent Token Type Confusion: Refresh tokens should not be used for access
+            if payload.get("refresh"):
+                return JSONResponse(status_code=401, content={"detail": "Refresh tokens cannot be used as access tokens"})
+                
             user_id = payload.get("sub")
             if user_id is None:
                 return JSONResponse(status_code=401, content={"detail": "Invalid token payload"})

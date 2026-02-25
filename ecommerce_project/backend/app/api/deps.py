@@ -21,6 +21,11 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
     )
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        
+        # Prevent Token Type Confusion: Refresh tokens should not be used for access
+        if payload.get("refresh"):
+            raise credentials_exception
+            
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception

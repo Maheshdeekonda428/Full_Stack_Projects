@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from app.core.database import get_database
-from app.models.user import User
+from app.models.user import User, UserResponse
 from app.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token
 from app.core.config import settings
 from jose import jwt, JWTError
@@ -95,7 +95,7 @@ async def reset_password(request: ResetPasswordRequest):
 @router.post("/login")
 async def login(res: Response, form_data: OAuth2PasswordRequestForm = Depends()):
     db = get_database()
-    user = await db.users.find_one({"email": form_data.username}) # Using email as username
+    user = await db.users.find_one({"email": form_data.username.lower()}) # Using email as username
     
     if not user:
         raise HTTPException(
@@ -131,8 +131,8 @@ async def login(res: Response, form_data: OAuth2PasswordRequestForm = Depends())
         value=refresh_token,
         httponly=True,
         max_age=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
-        samesite="lax",
-        secure=False, # Set to True in production with HTTPS
+        samesite="none",
+        secure= True, # Set to True in production with HTTPS
     )
     
     return response
@@ -177,14 +177,14 @@ async def google_login(res: Response, request: GoogleLoginRequest):
             value=refresh_token,
             httponly=True,
             max_age=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
-            samesite="lax",
-            secure=False,
+            samesite="none",
+            secure=True,
         )
         
         return {
             "access_token": access_token, 
             "token_type": "bearer",
-            "user": User(**user),
+            "user": UserResponse(**user),
             "generated_password": generated_password
         }
     except ValueError:
@@ -227,14 +227,14 @@ async def register(res: Response, user: User):
         httponly=True,
         max_age=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
         expires=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
-        samesite="lax",
-        secure=False,
+        samesite="none",
+        secure=True,
     )
     
     return {
         "access_token": access_token, 
         "token_type": "bearer",
-        "user": User(**created_user)
+        "user": UserResponse(**created_user)
     }
 
 @router.post("/refresh")
@@ -274,10 +274,26 @@ async def refresh_token(request: Request, res: Response):
         )
         
     new_access_token = create_access_token(subject=str(user["_id"]))
+    new_refresh_token = create_refresh_token(subject=str(user["_id"]))
+    
+    # Refresh Token Rotation: Set a new refresh token cookie
+    res.set_cookie(
+        key="refresh_token",
+        value=new_refresh_token,
+        httponly=True,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60,
+        samesite="none",
+        secure=True, 
+    )
+    
     return {"access_token": new_access_token, "token_type": "bearer"}
 
 @router.post("/logout")
 async def logout(res: Response):
-    res.delete_cookie(key="refresh_token")
+    res.delete_cookie(
+        key="refresh_token",
+        samesite="none",
+        secure=True
+        )
     return {"message": "Successfully logged out"}
 

@@ -1,10 +1,9 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import dotenv from 'dotenv';
-dotenv.config();
 
-// const API_BASE_URL = 'http://localhost:8000/api';
-const API_BASE_URL = process.env.API_BASE_URL;
+const rawBaseURL = import.meta.env.VITE_API_URL
+// Ensure it ends with /api for backend routing consistency
+const API_BASE_URL = rawBaseURL.endsWith('/api') || rawBaseURL.endsWith('/api/') ? rawBaseURL : `${rawBaseURL.replace(/\/$/, '')}/api`;
 
 const api = axios.create({
     baseURL: API_BASE_URL,

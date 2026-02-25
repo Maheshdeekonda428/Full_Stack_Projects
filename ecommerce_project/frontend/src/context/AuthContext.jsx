@@ -81,6 +81,21 @@ export const AuthProvider = ({ children }) => {
         toast.success('Logged out successfully');
     };
 
+    const storeCredentials = async (email, password) => {
+        try {
+            if ('PasswordCredential' in window) {
+                const cred = new window.PasswordCredential({
+                    id: email,
+                    password: password,
+                });
+                await navigator.credentials.store(cred);
+                console.log('AuthContext: Credentials stored for', email);
+            }
+        } catch (error) {
+            console.error('AuthContext: Failed to store credentials:', error);
+        }
+    };
+
     const updateUser = (userData) => {
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
@@ -95,6 +110,7 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         updateUser,
+        storeCredentials,
         isAuthenticated: !!user,
         isAdmin: user?.isAdmin || false,
     };

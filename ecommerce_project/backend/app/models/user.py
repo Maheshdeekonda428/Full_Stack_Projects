@@ -18,3 +18,14 @@ class User(BaseModel):
     model_config = ConfigDict(
         populate_by_name=True,
     )
+
+class UserResponse(BaseModel):
+    id: Optional[PyObjectId] = Field(default=None, alias="_id")
+    name: str
+    email: EmailStr
+    isAdmin: bool = False
+    createdAt: Optional[datetime] = None
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )

@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from app.core.database import get_database
-from app.models.user import User
+from app.models.user import User, UserResponse
 from app.api.deps import get_current_user, get_current_admin
 from app.core.security import get_password_hash
 from bson import ObjectId
 
 router = APIRouter()
 
-@router.get("/profile", response_model=User)
+@router.get("/profile", response_model=UserResponse)
 async def read_user_profile(current_user: User = Depends(get_current_user)):
     return current_user
 
